@@ -314,7 +314,7 @@ export default function Home() {
                 </div>
                 {/* Connector arrow */}
                 <div className="hidden md:block absolute -bottom-8 right-0 translate-x-12">
-                  <ArrowRight className="w-8 h-8 text-[#6366F1] rotate-45" />
+                  <ArrowRight className="w-16 h-16 text-[#6366F1] rotate-45" />
                 </div>
               </div>
             </motion.div>
@@ -343,7 +343,7 @@ export default function Home() {
                 </div>
                 {/* Connector arrow */}
                 <div className="hidden md:block absolute -bottom-10 left-0 -translate-x-12">
-                  <ArrowRight className="w-8 h-8 text-[#6366F1] rotate-[135deg]" />
+                  <ArrowRight className="w-16 h-16 text-[#6366F1] rotate-[135deg]" />
                 </div>
               </div>
             </motion.div>
