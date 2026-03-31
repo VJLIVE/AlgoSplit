@@ -426,6 +426,10 @@ class Algosplit(ARC4Contract):
             # Append to existing list
             user_bills = DynamicArray[ARC4UInt64].from_bytes(user_bills_bytes)
             user_bills.append(ARC4UInt64(bill_id))
+            
+            # Delete old box and create new one with larger size
+            deleted = op.Box.delete(user_key)
+            assert deleted, "Failed to delete user box"
             op.Box.put(user_key, user_bills.bytes)
         else:
             # Create new list

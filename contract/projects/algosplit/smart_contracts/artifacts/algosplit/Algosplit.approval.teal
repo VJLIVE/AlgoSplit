@@ -929,13 +929,13 @@ remove_member:
     swap
     concat
     dup
-    // smart_contracts/algosplit/contract.py:439
+    // smart_contracts/algosplit/contract.py:443
     // user_bills_bytes, exists = op.Box.get(user_key)
     box_get
-    // smart_contracts/algosplit/contract.py:441
+    // smart_contracts/algosplit/contract.py:445
     // if exists:
     bz remove_member_after_if_else@14
-    // smart_contracts/algosplit/contract.py:444-445
+    // smart_contracts/algosplit/contract.py:448-449
     // # Find and remove the bill_id
     // for i in urange(user_bills.length):
     dup
@@ -946,14 +946,14 @@ remove_member:
     bury 5
 
 remove_member_for_header@3:
-    // smart_contracts/algosplit/contract.py:444-445
+    // smart_contracts/algosplit/contract.py:448-449
     // # Find and remove the bill_id
     // for i in urange(user_bills.length):
     dig 4
     dig 6
     <
     bz remove_member_after_if_else@14
-    // smart_contracts/algosplit/contract.py:446
+    // smart_contracts/algosplit/contract.py:450
     // if user_bills[i].native == bill_id:
     dup
     extract 2 0
@@ -966,30 +966,30 @@ remove_member_for_header@3:
     dig 3
     ==
     bz remove_member_after_if_else@13
-    // smart_contracts/algosplit/contract.py:447-448
+    // smart_contracts/algosplit/contract.py:451-452
     // # Create new array without this bill
     // new_bills = DynamicArray[ARC4UInt64]()
     bytec 7 // 0x0000
     bury 7
-    // smart_contracts/algosplit/contract.py:449
+    // smart_contracts/algosplit/contract.py:453
     // for j in urange(user_bills.length):
     intc_0 // 0
     bury 4
 
 remove_member_for_header@6:
-    // smart_contracts/algosplit/contract.py:449
+    // smart_contracts/algosplit/contract.py:453
     // for j in urange(user_bills.length):
     dig 3
     dig 6
     <
     bz remove_member_after_for@10
-    // smart_contracts/algosplit/contract.py:450
+    // smart_contracts/algosplit/contract.py:454
     // if j != i:
     dig 3
     dig 5
     !=
     bz remove_member_after_if_else@9
-    // smart_contracts/algosplit/contract.py:451
+    // smart_contracts/algosplit/contract.py:455
     // new_bills.append(user_bills[j])
     dig 3
     intc_2 // 8
@@ -1013,7 +1013,7 @@ remove_member_for_header@6:
     bury 7
 
 remove_member_after_if_else@9:
-    // smart_contracts/algosplit/contract.py:449
+    // smart_contracts/algosplit/contract.py:453
     // for j in urange(user_bills.length):
     dig 3
     intc_1 // 1
@@ -1022,13 +1022,13 @@ remove_member_after_if_else@9:
     b remove_member_for_header@6
 
 remove_member_after_for@10:
-    // smart_contracts/algosplit/contract.py:453
+    // smart_contracts/algosplit/contract.py:457
     // if new_bills.length > 0:
     dig 6
     intc_0 // 0
     extract_uint16 // on error: invalid array length header
     bz remove_member_else_body@12
-    // smart_contracts/algosplit/contract.py:454
+    // smart_contracts/algosplit/contract.py:458
     // op.Box.put(user_key, new_bills.bytes)
     dig 1
     dig 7
@@ -1043,18 +1043,18 @@ remove_member_after_if_else@14:
     return
 
 remove_member_else_body@12:
-    // smart_contracts/algosplit/contract.py:456-457
+    // smart_contracts/algosplit/contract.py:460-461
     // # Delete box if empty
     // deleted = op.Box.delete(user_key)
     dig 1
     box_del
-    // smart_contracts/algosplit/contract.py:458
+    // smart_contracts/algosplit/contract.py:462
     // assert deleted, "Failed to delete user box"
     assert // Failed to delete user box
     b remove_member_after_if_else@14
 
 remove_member_after_if_else@13:
-    // smart_contracts/algosplit/contract.py:444-445
+    // smart_contracts/algosplit/contract.py:448-449
     // # Find and remove the bill_id
     // for i in urange(user_bills.length):
     dig 4
@@ -1256,13 +1256,23 @@ _add_bill_to_user:
     itob
     extract 6 2
     replace2 0
-    // smart_contracts/algosplit/contract.py:429
+    // smart_contracts/algosplit/contract.py:430-431
+    // # Delete old box and create new one with larger size
+    // deleted = op.Box.delete(user_key)
+    swap
+    dup
+    box_del
+    // smart_contracts/algosplit/contract.py:432
+    // assert deleted, "Failed to delete user box"
+    assert // Failed to delete user box
+    // smart_contracts/algosplit/contract.py:433
     // op.Box.put(user_key, user_bills.bytes)
+    swap
     box_put
     retsub
 
 _add_bill_to_user_else_body@2:
-    // smart_contracts/algosplit/contract.py:431-432
+    // smart_contracts/algosplit/contract.py:435-436
     // # Create new list
     // user_bills = DynamicArray[ARC4UInt64](ARC4UInt64(bill_id))
     frame_dig -1
@@ -1270,7 +1280,7 @@ _add_bill_to_user_else_body@2:
     pushbytes 0x0001
     swap
     concat
-    // smart_contracts/algosplit/contract.py:433
+    // smart_contracts/algosplit/contract.py:437
     // op.Box.put(user_key, user_bills.bytes)
     box_put
     retsub

@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
+import { useWallet } from './WalletContext';
 
 interface User {
   id: string;
@@ -32,6 +33,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
+  const { disconnectWallet } = useWallet();
 
   useEffect(() => {
     // Check for existing session (wallet address in localStorage)
@@ -57,9 +59,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = () => {
+    // Disconnect Pera Wallet
+    disconnectWallet();
+    
+    // Clear local storage
     localStorage.removeItem('walletAddress');
     localStorage.removeItem('user');
+    
+    // Clear user state
     setUser(null);
+    
+    // Redirect to login
     router.push('/login');
   };
 

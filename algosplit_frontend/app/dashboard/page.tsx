@@ -99,7 +99,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
           <button
             onClick={() => router.push('/dashboard/create-bill')}
             className="p-6 bg-white border border-[#E2E8F0] rounded-lg hover:border-[#6366F1] text-left group shadow-sm"
@@ -126,6 +126,21 @@ export default function DashboardPage() {
               <div>
                 <h3 className="font-semibold text-[#0F172A] mb-1">Contacts</h3>
                 <p className="text-sm text-[#64748B]">Manage contacts</p>
+              </div>
+            </div>
+          </button>
+
+          <button
+            onClick={() => router.push('/dashboard/analytics')}
+            className="p-6 bg-white border border-[#E2E8F0] rounded-lg hover:border-[#CBD5E1] text-left group shadow-sm"
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-[#EEF2FF] border border-[#C7D2FE] rounded-lg flex items-center justify-center">
+                <DollarSign className="w-6 h-6 text-[#6366F1]" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-[#0F172A] mb-1">Analytics</h3>
+                <p className="text-sm text-[#64748B]">View insights</p>
               </div>
             </div>
           </button>

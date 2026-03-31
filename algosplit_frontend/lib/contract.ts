@@ -54,10 +54,36 @@ export async function createBillTransaction(
 ): Promise<algosdk.Transaction[]> {
   const suggestedParams = await algodClient.getTransactionParams().do();
   
-  // Simplified MBR calculation
-  // Approximately 0.1 ALGO per box (bill + members + user boxes)
-  const estimatedBoxes = 1 + members.length + members.length; // bill + member boxes + user boxes
-  const totalMBR = 100000 * estimatedBoxes; // 0.1 ALGO per box
+  // Calculate proper MBR for boxes
+  // Box MBR = 2500 + 400 * box_size (in microAlgos)
+  const BOX_FLAT_MBR = 2500;
+  const BOX_BYTE_MBR = 400;
+  
+  // Bill box: 32 (Account) + 8 (UInt64) + 8 (UInt64) + 8 (UInt64) + 1 (Bool) = 57 bytes
+  const billBoxSize = 57;
+  const billBoxMBR = BOX_FLAT_MBR + (BOX_BYTE_MBR * billBoxSize);
+  
+  // Member box: 8 (UInt64) + 1 (Bool) = 9 bytes
+  const memberBoxSize = 9;
+  const memberBoxMBR = BOX_FLAT_MBR + (BOX_BYTE_MBR * memberBoxSize);
+  
+  // User box: For each member, estimate minimal growth
+  // New box: 2500 + 400 * (2 + 8) = 6500 microAlgos (1 bill)
+  const userBoxMBR = BOX_FLAT_MBR + (BOX_BYTE_MBR * (2 + 8)); // Just 1 bill worth
+  
+  // Total MBR: 1 bill box + N member boxes + N user boxes
+  // Add extra buffer for account minimum balance increase
+  const boxesMBR = billBoxMBR + (members.length * (memberBoxMBR + userBoxMBR));
+  const bufferMBR = 150000; // 0.15 ALGO buffer for account min balance
+  const totalMBR = boxesMBR + bufferMBR;
+  
+  console.log('MBR Calculation:');
+  console.log('Bill box MBR:', billBoxMBR / 1_000_000, 'ALGO');
+  console.log('Member box MBR (each):', memberBoxMBR / 1_000_000, 'ALGO');
+  console.log('User box MBR (each):', userBoxMBR / 1_000_000, 'ALGO');
+  console.log('Boxes MBR:', boxesMBR / 1_000_000, 'ALGO');
+  console.log('Buffer MBR:', bufferMBR / 1_000_000, 'ALGO');
+  console.log('Total MBR:', totalMBR / 1_000_000, 'ALGO');
 
   // MBR payment transaction
   const mbrPayment = algosdk.makePaymentTxnWithSuggestedParamsFromObject({
@@ -95,13 +121,20 @@ export async function createBillTransaction(
   const currentCounter = await getBillCounter();
   const nextBillId = currentCounter + 1;
   
+  // Helper function to encode uint64 as big-endian bytes
+  const encodeUint64 = (value: number): Uint8Array => {
+    const bytes = new Uint8Array(8);
+    new DataView(bytes.buffer).setBigUint64(0, BigInt(value), false);
+    return bytes;
+  };
+  
   // Create box references
   const boxes: algosdk.BoxReference[] = [];
   
   // Bill box: "bill_<id>"
   const billBoxName = new Uint8Array([
     ...Buffer.from('bill_'),
-    ...algosdk.encodeUint64(nextBillId),
+    ...encodeUint64(nextBillId),
   ]);
   boxes.push({ appIndex: APP_ID, name: billBoxName });
   
@@ -109,7 +142,7 @@ export async function createBillTransaction(
   for (const memberAddr of members) {
     const memberBoxName = new Uint8Array([
       ...Buffer.from('bill_'),
-      ...algosdk.encodeUint64(nextBillId),
+      ...encodeUint64(nextBillId),
       ...Buffer.from('_member_'),
       ...algosdk.decodeAddress(memberAddr).publicKey,
     ]);
@@ -177,20 +210,27 @@ export async function payBillTransaction(
   const billIdType = algosdk.ABIType.from('uint64');
   const billIdEncoded = billIdType.encode(BigInt(billId));
 
+  // Helper function to encode uint64 as big-endian bytes
+  const encodeUint64 = (value: number): Uint8Array => {
+    const bytes = new Uint8Array(8);
+    new DataView(bytes.buffer).setBigUint64(0, BigInt(value), false);
+    return bytes;
+  };
+
   // Create box references for the boxes that will be accessed
   const boxes: algosdk.BoxReference[] = [];
   
   // Bill box: "bill_<id>"
   const billBoxName = new Uint8Array([
     ...Buffer.from('bill_'),
-    ...algosdk.encodeUint64(billId),
+    ...encodeUint64(billId),
   ]);
   boxes.push({ appIndex: APP_ID, name: billBoxName });
   
   // Member box: "bill_<id>_member_<address>"
   const memberBoxName = new Uint8Array([
     ...Buffer.from('bill_'),
-    ...algosdk.encodeUint64(billId),
+    ...encodeUint64(billId),
     ...Buffer.from('_member_'),
     ...algosdk.decodeAddress(sender).publicKey,
   ]);
@@ -405,12 +445,26 @@ export async function cancelBillTransaction(
   const billIdType = algosdk.ABIType.from('uint64');
   const billIdEncoded = billIdType.encode(BigInt(billId));
 
+  // Generate bill box key
+  const billIdBytes = new Uint8Array(8);
+  new DataView(billIdBytes.buffer).setBigUint64(0, BigInt(billId), false);
+  const billBoxName = new Uint8Array([
+    ...Buffer.from('bill_'),
+    ...billIdBytes,
+  ]);
+
   return algosdk.makeApplicationNoOpTxnFromObject({
     sender,
     appIndex: APP_ID,
     appArgs: [
       methodSelector,
       billIdEncoded,
+    ],
+    boxes: [
+      {
+        appIndex: APP_ID,
+        name: billBoxName,
+      },
     ],
     suggestedParams,
   });

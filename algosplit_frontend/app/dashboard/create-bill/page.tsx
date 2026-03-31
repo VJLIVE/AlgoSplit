@@ -180,20 +180,14 @@ export default function CreateBillPage() {
       // Check balance
       const { algodClient: algoClient } = await import('@/lib/algorand');
       const accountInfo = await algoClient.accountInformation(accountAddress).do();
-      const balance = accountInfo.amount;
-      
-      const estimatedMBR = 100000 * (1 + validMembers.length);
-      const estimatedFees = 2000;
-      const requiredBalance = estimatedMBR + estimatedFees + 100000;
-      
-      if (balance < requiredBalance) {
-        const requiredALGO = (requiredBalance / 1_000_000).toFixed(3);
-        const currentALGO = (Number(balance) / 1_000_000).toFixed(3);
-        throw new Error(
-          `Insufficient balance. You have ${currentALGO} ALGO but need at least ${requiredALGO} ALGO ` +
-          `(includes box storage MBR and fees). Please add more ALGO to your wallet.`
-        );
-      }
+      const totalBalance = Number(accountInfo.amount);
+      const minBalance = Number(accountInfo.minBalance);
+      const availableBalance = totalBalance - minBalance;
+
+      console.log('Balance check:');
+      console.log('Total balance:', totalBalance / 1_000_000, 'ALGO');
+      console.log('Minimum balance (locked):', minBalance / 1_000_000, 'ALGO');
+      console.log('Available balance:', availableBalance / 1_000_000, 'ALGO');
 
       // Save new contacts
       for (const member of validMembers) {
@@ -211,6 +205,27 @@ export default function CreateBillPage() {
         memberAddresses,
         memberShares
       );
+
+      // Calculate total cost (MBR payment + transaction fees)
+      // First transaction is the MBR payment - access the amount from the transaction object
+      const mbrPaymentTxn = txns[0];
+      // For payment transactions, amount is in the transaction but needs to be accessed via get method
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const mbrPayment = Number((mbrPaymentTxn as any).amount || 0);
+      const txnFees = txns.reduce((sum, txn) => sum + Number(txn.fee || 1000), 0);
+      const totalCost = mbrPayment + txnFees;
+
+      console.log('Transaction cost:');
+      console.log('MBR payment:', mbrPayment / 1_000_000, 'ALGO');
+      console.log('Transaction fees:', txnFees / 1_000_000, 'ALGO');
+      console.log('Total cost:', totalCost / 1_000_000, 'ALGO');
+      console.log('MBR transaction object:', mbrPaymentTxn);
+
+      if (availableBalance < totalCost) {
+        throw new Error(
+          `Insufficient available balance. You need ${(totalCost / 1_000_000).toFixed(4)} ALGO but only have ${(availableBalance / 1_000_000).toFixed(4)} ALGO available (${(totalBalance / 1_000_000).toFixed(2)} ALGO total, ${(minBalance / 1_000_000).toFixed(2)} ALGO locked).`
+        );
+      }
 
       // Sign with Pera Wallet
       const txnsToSign = txns.map(txn => ({
