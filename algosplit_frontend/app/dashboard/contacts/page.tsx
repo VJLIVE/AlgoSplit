@@ -4,8 +4,9 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
-import { PlusIcon, TrashIcon, PencilIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
+import { ArrowLeft, Plus, Trash2, User, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { shortenAddress } from '@/lib/algorand';
+import algosdk from 'algosdk';
 
 interface Contact {
   _id: string;
@@ -16,12 +17,13 @@ interface Contact {
 export default function ContactsPage() {
   const { user, isLoading, isAuthenticated } = useAuth();
   const router = useRouter();
+
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showModal, setShowModal] = useState(false);
-  const [editingContact, setEditingContact] = useState<Contact | null>(null);
-  const [formData, setFormData] = useState({ contactName: '', walletAddress: '' });
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [newContact, setNewContact] = useState({ name: '', address: '' });
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -33,13 +35,14 @@ export default function ContactsPage() {
     if (user) {
       fetchContacts();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   const fetchContacts = async () => {
     try {
-      const walletAddress = user?.walletAddress;
+      setLoading(true);
       const response = await fetch('/api/contacts', {
-        headers: { 'x-wallet-address': walletAddress || '' },
+        headers: { 'x-wallet-address': user?.walletAddress || '' },
       });
       const data = await response.json();
       setContacts(data.contacts || []);
@@ -50,222 +53,226 @@ export default function ContactsPage() {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleAddContact = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setSuccess('');
+
+    if (!algosdk.isValidAddress(newContact.address)) {
+      setError('Invalid Algorand address');
+      return;
+    }
 
     try {
-      const walletAddress = user?.walletAddress;
-      const url = editingContact ? `/api/contacts/${editingContact._id}` : '/api/contacts';
-      const method = editingContact ? 'PUT' : 'POST';
-
-      const response = await fetch(url, {
-        method,
+      const response = await fetch('/api/contacts', {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-wallet-address': walletAddress || '',
+          'x-wallet-address': user?.walletAddress || '',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          contactName: newContact.name,
+          walletAddress: newContact.address,
+        }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to save contact');
+        throw new Error(data.error || 'Failed to add contact');
       }
 
-      setShowModal(false);
-      setFormData({ contactName: '', walletAddress: '' });
-      setEditingContact(null);
-      fetchContacts();
+      setSuccess('Contact added successfully');
+      setNewContact({ name: '', address: '' });
+      setShowAddModal(false);
+      await fetchContacts();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to save contact');
+      setError(err instanceof Error ? err.message : 'Failed to add contact');
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this contact?')) return;
+  const handleDeleteContact = async (contactId: string) => {
+    if (!confirm('Are you sure you want to delete this contact?')) {
+      return;
+    }
 
     try {
-      const walletAddress = user?.walletAddress;
-      await fetch(`/api/contacts/${id}`, {
+      const response = await fetch(`/api/contacts/${contactId}`, {
         method: 'DELETE',
-        headers: { 'x-wallet-address': walletAddress || '' },
+        headers: { 'x-wallet-address': user?.walletAddress || '' },
       });
-      fetchContacts();
-    } catch (err) {
-      console.error('Failed to delete contact:', err);
+
+      if (!response.ok) {
+        throw new Error('Failed to delete contact');
+      }
+
+      setSuccess('Contact deleted');
+      await fetchContacts();
+    } catch (error) {
+      console.error('Failed to delete contact:', error);
+      setError('Failed to delete contact');
     }
-  };
-
-  const openEditModal = (contact: Contact) => {
-    setEditingContact(contact);
-    setFormData({ contactName: contact.contactName, walletAddress: contact.walletAddress });
-    setShowModal(true);
-  };
-
-  const openAddModal = () => {
-    setEditingContact(null);
-    setFormData({ contactName: '', walletAddress: '' });
-    setShowModal(true);
   };
 
   if (isLoading || !user) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+      <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-2 border-[#6366F1] border-t-transparent"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#F8FAFC]">
       <Navbar />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-6">
-          <button
-            onClick={() => router.push('/dashboard')}
-            className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4"
-          >
-            <ArrowLeftIcon className="w-5 h-5" />
-            Back to Dashboard
-          </button>
-          <div className="flex justify-between items-center">
-            <div>
-              <h2 className="text-3xl font-bold text-gray-900 mb-2">Contacts</h2>
-              <p className="text-gray-600">Manage your saved wallet addresses</p>
-            </div>
-            <button
-              onClick={openAddModal}
-              className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
-            >
-              <PlusIcon className="w-5 h-5" />
-              Add Contact
-            </button>
+      <div className="max-w-4xl mx-auto px-6 py-8">
+        <button
+          onClick={() => router.push('/dashboard')}
+          className="flex items-center gap-2 text-[#64748B] hover:text-[#0F172A] mb-6"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back to Dashboard
+        </button>
+
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h2 className="text-3xl font-bold text-[#0F172A] mb-2">Contacts</h2>
+            <p className="text-[#64748B]">Manage your saved contacts</p>
           </div>
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="px-4 py-2 bg-[#6366F1] text-white rounded-lg hover:bg-[#4F46E5] flex items-center gap-2 shadow-sm"
+          >
+            <Plus className="w-4 h-4" />
+            Add Contact
+          </button>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+        {success && (
+          <div className="mb-6 p-4 bg-[#DCFCE7] border border-[#BBF7D0] rounded-lg flex items-center gap-3">
+            <CheckCircle2 className="w-5 h-5 text-[#16A34A]" />
+            <p className="text-[#16A34A] text-sm">{success}</p>
+          </div>
+        )}
+
+        {error && (
+          <div className="mb-6 p-4 bg-[#FEE2E2] border border-[#FCA5A5] rounded-lg flex items-center gap-3">
+            <AlertCircle className="w-5 h-5 text-[#DC2626]" />
+            <p className="text-[#DC2626] text-sm">{error}</p>
+          </div>
+        )}
+
+        <div className="bg-white border border-[#E2E8F0] rounded-lg shadow-sm">
           {loading ? (
-            <div className="text-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
+            <div className="p-12 text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-2 border-[#6366F1] border-t-transparent mx-auto mb-4"></div>
+              <p className="text-[#64748B]">Loading contacts...</p>
             </div>
           ) : contacts.length === 0 ? (
-            <div className="text-center py-12">
-              <UserGroupIcon className="w-16 h-16 mx-auto text-gray-400 mb-4" />
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">No contacts yet</h3>
-              <p className="text-gray-600 mb-4">Add contacts to quickly create bills</p>
+            <div className="p-12 text-center">
+              <div className="w-16 h-16 bg-[#F1F5F9] rounded-lg flex items-center justify-center mx-auto mb-4">
+                <User className="w-8 h-8 text-[#64748B]" />
+              </div>
+              <h3 className="text-lg font-semibold text-[#0F172A] mb-2">No contacts yet</h3>
+              <p className="text-[#64748B] mb-4">Add contacts to quickly create bills</p>
               <button
-                onClick={openAddModal}
-                className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                onClick={() => setShowAddModal(true)}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-[#6366F1] text-white rounded-lg hover:bg-[#4F46E5] shadow-sm"
               >
-                <PlusIcon className="w-5 h-5" />
+                <Plus className="w-4 h-4" />
                 Add Your First Contact
               </button>
             </div>
           ) : (
-            <div className="divide-y divide-gray-200">
+            <div className="divide-y divide-[#E2E8F0]">
               {contacts.map((contact) => (
-                <div key={contact._id} className="p-6 flex items-center justify-between hover:bg-gray-50">
-                  <div>
-                    <h3 className="font-semibold text-gray-900">{contact.contactName}</h3>
-                    <p className="text-sm text-gray-600 font-mono">{shortenAddress(contact.walletAddress)}</p>
+                <div
+                  key={contact._id}
+                  className="p-4 flex items-center justify-between hover:bg-[#F8FAFC]"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 bg-[#EEF2FF] border border-[#C7D2FE] rounded-lg flex items-center justify-center">
+                      <User className="w-5 h-5 text-[#6366F1]" />
+                    </div>
+                    <div>
+                      <div className="text-[#0F172A] font-medium">{contact.contactName}</div>
+                      <div className="text-[#64748B] text-sm font-mono">
+                        {shortenAddress(contact.walletAddress)}
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => openEditModal(contact)}
-                      className="p-2 text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
-                    >
-                      <PencilIcon className="w-5 h-5" />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(contact._id)}
-                      className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                    >
-                      <TrashIcon className="w-5 h-5" />
-                    </button>
-                  </div>
+                  <button
+                    onClick={() => handleDeleteContact(contact._id)}
+                    className="p-2 text-[#DC2626] hover:bg-[#FEE2E2] rounded-lg"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
                 </div>
               ))}
             </div>
           )}
         </div>
-      </div>
 
-      {/* Modal */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl max-w-md w-full p-6">
-            <h3 className="text-xl font-bold text-gray-900 mb-4">
-              {editingContact ? 'Edit Contact' : 'Add Contact'}
-            </h3>
+        {/* Add Contact Modal */}
+        {showAddModal && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-6">
+            <div className="bg-white border border-[#E2E8F0] rounded-lg max-w-md w-full p-6 shadow-lg">
+              <h3 className="text-xl font-bold text-[#0F172A] mb-4">Add Contact</h3>
+              
+              <form onSubmit={handleAddContact} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-[#0F172A] mb-2">
+                    Contact Name
+                  </label>
+                  <input
+                    type="text"
+                    value={newContact.name}
+                    onChange={(e) => setNewContact({ ...newContact, name: e.target.value })}
+                    className="w-full px-4 py-3 bg-white border border-[#E2E8F0] rounded-lg text-[#0F172A] placeholder-[#94A3B8] focus:border-[#6366F1] focus:outline-none focus:ring-1 focus:ring-[#6366F1]"
+                    placeholder="John Doe"
+                    required
+                  />
+                </div>
 
-            {error && (
-              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
-                {error}
-              </div>
-            )}
+                <div>
+                  <label className="block text-sm font-medium text-[#0F172A] mb-2">
+                    Wallet Address
+                  </label>
+                  <input
+                    type="text"
+                    value={newContact.address}
+                    onChange={(e) => setNewContact({ ...newContact, address: e.target.value })}
+                    className="w-full px-4 py-3 bg-white border border-[#E2E8F0] rounded-lg text-[#0F172A] placeholder-[#94A3B8] focus:border-[#6366F1] focus:outline-none focus:ring-1 focus:ring-[#6366F1] font-mono text-sm"
+                    placeholder="ALGORAND_ADDRESS..."
+                    required
+                  />
+                </div>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Contact Name
-                </label>
-                <input
-                  type="text"
-                  value={formData.contactName}
-                  onChange={(e) => setFormData({ ...formData, contactName: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                  placeholder="John Doe"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Wallet Address
-                </label>
-                <input
-                  type="text"
-                  value={formData.walletAddress}
-                  onChange={(e) => setFormData({ ...formData, walletAddress: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent font-mono text-sm"
-                  placeholder="ALGORAND_ADDRESS"
-                  required
-                />
-              </div>
-
-              <div className="flex gap-3 pt-4">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowModal(false);
-                    setError('');
-                  }}
-                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
-                >
-                  {editingContact ? 'Update' : 'Add'}
-                </button>
-              </div>
-            </form>
+                <div className="flex gap-3 pt-4">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowAddModal(false);
+                      setNewContact({ name: '', address: '' });
+                      setError('');
+                    }}
+                    className="flex-1 px-4 py-2 border border-[#E2E8F0] text-[#0F172A] rounded-lg hover:border-[#CBD5E1] hover:bg-[#F8FAFC]"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="flex-1 px-4 py-2 bg-[#6366F1] text-white rounded-lg hover:bg-[#4F46E5] shadow-sm"
+                  >
+                    Add Contact
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
-  );
-}
-
-function UserGroupIcon(props: React.SVGProps<SVGSVGElement>) {
-  return (
-    <svg {...props} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-    </svg>
   );
 }

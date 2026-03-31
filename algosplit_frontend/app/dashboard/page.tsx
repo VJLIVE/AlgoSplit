@@ -81,78 +81,78 @@ export default function DashboardPage() {
 
   if (isLoading || !user) {
     return (
-      <div className="min-h-screen bg-[#0F172A] flex items-center justify-center">
+      <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-2 border-[#6366F1] border-t-transparent"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#0F172A]">
+    <div className="min-h-screen bg-[#F8FAFC]">
       <Navbar />
 
       <div className="max-w-7xl mx-auto px-6 py-8">
         {/* Header */}
         <div className="mb-8">
-          <h2 className="text-3xl font-bold text-[#E5E7EB] mb-2">Dashboard</h2>
-          <p className="text-[#9CA3AF]">Manage your split bills and payments</p>
+          <h2 className="text-3xl font-bold text-[#0F172A] mb-2">Dashboard</h2>
+          <p className="text-[#64748B]">Manage your split bills and payments</p>
         </div>
 
         {/* Quick Actions */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
           <button
             onClick={() => router.push('/dashboard/create-bill')}
-            className="p-6 bg-[#1F2937] border border-[#374151] rounded-lg hover:border-[#6366F1] text-left group"
+            className="p-6 bg-white border border-[#E2E8F0] rounded-lg hover:border-[#6366F1] text-left group shadow-sm"
           >
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-[#6366F1]/10 border border-[#6366F1]/20 rounded-lg flex items-center justify-center group-hover:bg-[#6366F1]/20">
+              <div className="w-12 h-12 bg-[#EEF2FF] border border-[#C7D2FE] rounded-lg flex items-center justify-center group-hover:bg-[#DDD6FE]">
                 <Plus className="w-6 h-6 text-[#6366F1]" />
               </div>
               <div>
-                <h3 className="font-semibold text-[#E5E7EB] mb-1">Create Bill</h3>
-                <p className="text-sm text-[#9CA3AF]">Split a new bill</p>
+                <h3 className="font-semibold text-[#0F172A] mb-1">Create Bill</h3>
+                <p className="text-sm text-[#64748B]">Split a new bill</p>
               </div>
             </div>
           </button>
 
           <button
             onClick={() => router.push('/dashboard/contacts')}
-            className="p-6 bg-[#1F2937] border border-[#374151] rounded-lg hover:border-[#4B5563] text-left group"
+            className="p-6 bg-white border border-[#E2E8F0] rounded-lg hover:border-[#CBD5E1] text-left group shadow-sm"
           >
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-[#22C55E]/10 border border-[#22C55E]/20 rounded-lg flex items-center justify-center">
-                <Users className="w-6 h-6 text-[#22C55E]" />
+              <div className="w-12 h-12 bg-[#DCFCE7] border border-[#BBF7D0] rounded-lg flex items-center justify-center">
+                <Users className="w-6 h-6 text-[#16A34A]" />
               </div>
               <div>
-                <h3 className="font-semibold text-[#E5E7EB] mb-1">Contacts</h3>
-                <p className="text-sm text-[#9CA3AF]">Manage contacts</p>
+                <h3 className="font-semibold text-[#0F172A] mb-1">Contacts</h3>
+                <p className="text-sm text-[#64748B]">Manage contacts</p>
               </div>
             </div>
           </button>
 
-          <div className="p-6 bg-[#1F2937] border border-[#374151] rounded-lg">
+          <div className="p-6 bg-white border border-[#E2E8F0] rounded-lg shadow-sm">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-[#F59E0B]/10 border border-[#F59E0B]/20 rounded-lg flex items-center justify-center">
-                <FileText className="w-6 h-6 text-[#F59E0B]" />
+              <div className="w-12 h-12 bg-[#FEF3C7] border border-[#FDE68A] rounded-lg flex items-center justify-center">
+                <FileText className="w-6 h-6 text-[#D97706]" />
               </div>
               <div>
-                <h3 className="font-semibold text-[#E5E7EB] mb-1">Total Bills</h3>
-                <p className="text-2xl font-bold text-[#E5E7EB]">{bills.length}</p>
+                <h3 className="font-semibold text-[#0F172A] mb-1">Total Bills</h3>
+                <p className="text-2xl font-bold text-[#0F172A]">{bills.length}</p>
               </div>
             </div>
           </div>
         </div>
 
         {/* Tabs */}
-        <div className="bg-[#1F2937] border border-[#374151] rounded-lg">
-          <div className="border-b border-[#374151]">
+        <div className="bg-white border border-[#E2E8F0] rounded-lg shadow-sm">
+          <div className="border-b border-[#E2E8F0]">
             <nav className="flex">
               <button
                 onClick={() => setActiveTab('pending')}
                 className={`px-6 py-4 text-sm font-medium border-b-2 ${
                   activeTab === 'pending'
                     ? 'border-[#6366F1] text-[#6366F1]'
-                    : 'border-transparent text-[#9CA3AF] hover:text-[#E5E7EB]'
+                    : 'border-transparent text-[#64748B] hover:text-[#0F172A]'
                 }`}
               >
                 Pending Payments
@@ -162,7 +162,7 @@ export default function DashboardPage() {
                 className={`px-6 py-4 text-sm font-medium border-b-2 ${
                   activeTab === 'completed'
                     ? 'border-[#6366F1] text-[#6366F1]'
-                    : 'border-transparent text-[#9CA3AF] hover:text-[#E5E7EB]'
+                    : 'border-transparent text-[#64748B] hover:text-[#0F172A]'
                 }`}
               >
                 Completed
@@ -172,7 +172,7 @@ export default function DashboardPage() {
                 className={`px-6 py-4 text-sm font-medium border-b-2 ${
                   activeTab === 'created'
                     ? 'border-[#6366F1] text-[#6366F1]'
-                    : 'border-transparent text-[#9CA3AF] hover:text-[#E5E7EB]'
+                    : 'border-transparent text-[#64748B] hover:text-[#0F172A]'
                 }`}
               >
                 Created by Me
@@ -184,15 +184,15 @@ export default function DashboardPage() {
             {loading ? (
               <div className="text-center py-12">
                 <div className="animate-spin rounded-full h-12 w-12 border-2 border-[#6366F1] border-t-transparent mx-auto mb-4"></div>
-                <p className="text-[#9CA3AF]">Loading bills...</p>
+                <p className="text-[#64748B]">Loading bills...</p>
               </div>
             ) : filteredBills.length === 0 ? (
               <div className="text-center py-12">
-                <div className="w-16 h-16 bg-[#374151] rounded-lg flex items-center justify-center mx-auto mb-4">
-                  <FileText className="w-8 h-8 text-[#9CA3AF]" />
+                <div className="w-16 h-16 bg-[#F1F5F9] rounded-lg flex items-center justify-center mx-auto mb-4">
+                  <FileText className="w-8 h-8 text-[#64748B]" />
                 </div>
-                <h3 className="text-lg font-semibold text-[#E5E7EB] mb-2">No bills yet</h3>
-                <p className="text-[#9CA3AF] mb-4">
+                <h3 className="text-lg font-semibold text-[#0F172A] mb-2">No bills yet</h3>
+                <p className="text-[#64748B] mb-4">
                   {activeTab === 'pending' && "You don't have any pending payments"}
                   {activeTab === 'completed' && "You haven't completed any payments yet"}
                   {activeTab === 'created' && "You haven't created any bills yet"}
@@ -200,7 +200,7 @@ export default function DashboardPage() {
                 {activeTab === 'created' && (
                   <button
                     onClick={() => router.push('/dashboard/create-bill')}
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-[#6366F1] text-white rounded-lg hover:bg-[#5558E3]"
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-[#6366F1] text-white rounded-lg hover:bg-[#4F46E5] shadow-sm"
                   >
                     <Plus className="w-4 h-4" />
                     Create Your First Bill
@@ -213,22 +213,22 @@ export default function DashboardPage() {
                   <button
                     key={bill.id}
                     onClick={() => router.push(`/dashboard/bills/${bill.id}`)}
-                    className="w-full border border-[#374151] rounded-lg p-4 hover:border-[#4B5563] text-left"
+                    className="w-full border border-[#E2E8F0] rounded-lg p-4 hover:border-[#CBD5E1] hover:bg-[#F8FAFC] text-left"
                   >
                     <div className="flex justify-between items-start mb-3">
                       <div>
-                        <h3 className="font-semibold text-[#E5E7EB] mb-1">Bill #{bill.id}</h3>
-                        <p className="text-sm text-[#9CA3AF]">
+                        <h3 className="font-semibold text-[#0F172A] mb-1">Bill #{bill.id}</h3>
+                        <p className="text-sm text-[#64748B]">
                           Creator: {shortenAddress(bill.creator)}
                         </p>
                       </div>
                       <div className="text-right">
-                        <div className="flex items-center gap-1 text-lg font-bold text-[#E5E7EB]">
+                        <div className="flex items-center gap-1 text-lg font-bold text-[#0F172A]">
                           <DollarSign className="w-4 h-4" />
                           {formatAlgoAmount(Number(bill.totalAmount))} ALGO
                         </div>
                         {bill.memberDetails && (
-                          <p className="text-sm text-[#9CA3AF]">
+                          <p className="text-sm text-[#64748B]">
                             Your share: {formatAlgoAmount(Number(bill.memberDetails.share))} ALGO
                           </p>
                         )}
@@ -236,7 +236,7 @@ export default function DashboardPage() {
                     </div>
 
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4 text-sm text-[#9CA3AF]">
+                      <div className="flex items-center gap-4 text-sm text-[#64748B]">
                         <span>{Number(bill.memberCount)} members</span>
                         <span>•</span>
                         <span>{Number(bill.settledCount)} paid</span>
@@ -246,8 +246,8 @@ export default function DashboardPage() {
                         <span
                           className={`px-3 py-1 rounded-lg text-xs font-medium ${
                             bill.memberDetails.paid
-                              ? 'bg-[#22C55E]/10 text-[#22C55E] border border-[#22C55E]/20'
-                              : 'bg-[#F59E0B]/10 text-[#F59E0B] border border-[#F59E0B]/20'
+                              ? 'bg-[#DCFCE7] text-[#16A34A] border border-[#BBF7D0]'
+                              : 'bg-[#FEF3C7] text-[#D97706] border border-[#FDE68A]'
                           }`}
                         >
                           {bill.memberDetails.paid ? (
@@ -265,7 +265,7 @@ export default function DashboardPage() {
                       )}
 
                       {bill.isSettled && (
-                        <span className="px-3 py-1 rounded-lg text-xs font-medium bg-[#6366F1]/10 text-[#6366F1] border border-[#6366F1]/20">
+                        <span className="px-3 py-1 rounded-lg text-xs font-medium bg-[#EEF2FF] text-[#6366F1] border border-[#C7D2FE]">
                           Settled
                         </span>
                       )}

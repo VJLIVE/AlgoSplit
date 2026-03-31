@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useWallet } from '@/contexts/WalletContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Wallet, ArrowLeft, AlertCircle, User, Mail } from 'lucide-react';
+import Navbar from '@/components/Navbar';
 
 export default function SignupPage() {
   const router = useRouter();
@@ -69,33 +70,36 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0F172A] flex items-center justify-center px-6">
-      <div className="w-full max-w-md">
-        <button
-          onClick={() => router.push('/')}
-          className="flex items-center gap-2 text-[#9CA3AF] hover:text-[#E5E7EB] mb-8"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Back
-        </button>
+    <div className="min-h-screen bg-[#F8FAFC]">
+      <Navbar />
+      
+      <div className="flex items-center justify-center px-6 py-16">
+        <div className="w-full max-w-md">
+          <button
+            onClick={() => router.push('/')}
+            className="flex items-center gap-2 text-[#64748B] hover:text-[#0F172A] mb-8"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back
+          </button>
 
-        <div className="bg-[#1F2937] border border-[#374151] rounded-lg p-8">
+        <div className="bg-white border border-[#E2E8F0] rounded-lg p-8 shadow-sm">
           <div className="mb-6">
-            <h1 className="text-2xl font-bold text-[#E5E7EB] mb-1">Create account</h1>
-            <p className="text-[#9CA3AF] text-sm">Join AlgoSplit and start splitting bills</p>
+            <h1 className="text-2xl font-bold text-[#0F172A] mb-1">Create account</h1>
+            <p className="text-[#64748B] text-sm">Join AlgoSplit and start splitting bills</p>
           </div>
 
           {/* Progress Steps */}
           <div className="flex items-center justify-center mb-8">
             <div className="flex items-center">
               <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-medium ${
-                step >= 1 ? 'bg-[#6366F1] text-white' : 'bg-[#374151] text-[#9CA3AF]'
+                step >= 1 ? 'bg-[#6366F1] text-white' : 'bg-[#E2E8F0] text-[#64748B]'
               }`}>
                 1
               </div>
-              <div className={`w-16 h-0.5 ${step >= 2 ? 'bg-[#6366F1]' : 'bg-[#374151]'}`} />
+              <div className={`w-16 h-0.5 ${step >= 2 ? 'bg-[#6366F1]' : 'bg-[#E2E8F0]'}`} />
               <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-medium ${
-                step >= 2 ? 'bg-[#6366F1] text-white' : 'bg-[#374151] text-[#9CA3AF]'
+                step >= 2 ? 'bg-[#6366F1] text-white' : 'bg-[#E2E8F0] text-[#64748B]'
               }`}>
                 2
               </div>
@@ -103,27 +107,27 @@ export default function SignupPage() {
           </div>
 
           {error && (
-            <div className="mb-6 p-4 bg-[#EF4444]/10 border border-[#EF4444]/20 rounded-lg flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 text-[#EF4444] flex-shrink-0 mt-0.5" />
-              <p className="text-[#EF4444] text-sm">{error}</p>
+            <div className="mb-6 p-4 bg-[#FEE2E2] border border-[#FCA5A5] rounded-lg flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-[#DC2626] flex-shrink-0 mt-0.5" />
+              <p className="text-[#DC2626] text-sm">{error}</p>
             </div>
           )}
 
           {step === 1 ? (
             <form onSubmit={handleNextStep} className="space-y-4">
               <div>
-                <label htmlFor="name" className="block text-sm font-medium text-[#E5E7EB] mb-2">
+                <label htmlFor="name" className="block text-sm font-medium text-[#0F172A] mb-2">
                   Full Name
                 </label>
                 <div className="relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#9CA3AF]" />
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#64748B]" />
                   <input
                     type="text"
                     id="name"
                     name="name"
                     value={formData.name}
                     onChange={handleInputChange}
-                    className="w-full pl-10 pr-4 py-3 bg-[#111827] border border-[#374151] rounded-lg text-[#E5E7EB] placeholder-[#9CA3AF] focus:border-[#6366F1] focus:outline-none"
+                    className="w-full pl-10 pr-4 py-3 bg-white border border-[#E2E8F0] rounded-lg text-[#0F172A] placeholder-[#94A3B8] focus:border-[#6366F1] focus:outline-none focus:ring-1 focus:ring-[#6366F1]"
                     placeholder="John Doe"
                     required
                   />
@@ -131,18 +135,18 @@ export default function SignupPage() {
               </div>
 
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-[#E5E7EB] mb-2">
+                <label htmlFor="email" className="block text-sm font-medium text-[#0F172A] mb-2">
                   Email Address
                 </label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#9CA3AF]" />
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#64748B]" />
                   <input
                     type="email"
                     id="email"
                     name="email"
                     value={formData.email}
                     onChange={handleInputChange}
-                    className="w-full pl-10 pr-4 py-3 bg-[#111827] border border-[#374151] rounded-lg text-[#E5E7EB] placeholder-[#9CA3AF] focus:border-[#6366F1] focus:outline-none"
+                    className="w-full pl-10 pr-4 py-3 bg-white border border-[#E2E8F0] rounded-lg text-[#0F172A] placeholder-[#94A3B8] focus:border-[#6366F1] focus:outline-none focus:ring-1 focus:ring-[#6366F1]"
                     placeholder="john@example.com"
                     required
                   />
@@ -151,7 +155,7 @@ export default function SignupPage() {
 
               <button
                 type="submit"
-                className="w-full bg-[#6366F1] text-white py-3 rounded-lg font-medium hover:bg-[#5558E3] mt-6"
+                className="w-full bg-[#6366F1] text-white py-3 rounded-lg font-medium hover:bg-[#4F46E5] mt-6 shadow-sm"
               >
                 Next
               </button>
@@ -159,18 +163,18 @@ export default function SignupPage() {
           ) : (
             <div className="space-y-6">
               <div className="text-center py-4">
-                <div className="w-16 h-16 bg-[#6366F1]/10 border border-[#6366F1]/20 rounded-lg flex items-center justify-center mx-auto mb-4">
+                <div className="w-16 h-16 bg-[#EEF2FF] border border-[#C7D2FE] rounded-lg flex items-center justify-center mx-auto mb-4">
                   <Wallet className="w-8 h-8 text-[#6366F1]" />
                 </div>
-                <h3 className="text-lg font-semibold text-[#E5E7EB] mb-2">Connect your wallet</h3>
-                <p className="text-[#9CA3AF] text-sm">
+                <h3 className="text-lg font-semibold text-[#0F172A] mb-2">Connect your wallet</h3>
+                <p className="text-[#64748B] text-sm">
                   Connect Pera Wallet to complete registration
                 </p>
               </div>
 
               {accountAddress && (
-                <div className="p-4 bg-[#22C55E]/10 border border-[#22C55E]/20 rounded-lg">
-                  <p className="text-[#22C55E] text-sm">
+                <div className="p-4 bg-[#DCFCE7] border border-[#BBF7D0] rounded-lg">
+                  <p className="text-[#16A34A] text-sm">
                     Connected: {accountAddress.slice(0, 8)}...{accountAddress.slice(-6)}
                   </p>
                 </div>
@@ -179,7 +183,7 @@ export default function SignupPage() {
               <button
                 onClick={handleConnectWallet}
                 disabled={loading}
-                className="w-full bg-[#6366F1] text-white py-3 rounded-lg font-medium hover:bg-[#5558E3] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="w-full bg-[#6366F1] text-white py-3 rounded-lg font-medium hover:bg-[#4F46E5] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-sm"
               >
                 {loading ? (
                   <>
@@ -199,7 +203,7 @@ export default function SignupPage() {
 
               <button
                 onClick={() => setStep(1)}
-                className="w-full text-[#9CA3AF] py-2 text-sm hover:text-[#E5E7EB]"
+                className="w-full text-[#64748B] py-2 text-sm hover:text-[#0F172A]"
               >
                 Back
               </button>
@@ -207,13 +211,14 @@ export default function SignupPage() {
           )}
 
           <div className="mt-6 text-center">
-            <p className="text-sm text-[#9CA3AF]">
+            <p className="text-sm text-[#64748B]">
               Already have an account?{' '}
-              <button onClick={() => router.push('/login')} className="text-[#6366F1] hover:text-[#5558E3]">
+              <button onClick={() => router.push('/login')} className="text-[#6366F1] hover:text-[#4F46E5]">
                 Login
               </button>
             </p>
           </div>
+        </div>
         </div>
       </div>
     </div>
