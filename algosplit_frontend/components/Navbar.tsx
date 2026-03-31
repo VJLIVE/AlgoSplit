@@ -34,7 +34,7 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-6">
         <div className="flex justify-between items-center h-16">
           <button 
-            onClick={() => router.push(user ? '/dashboard' : '/')}
+            onClick={() => router.push('/')}
             className="flex items-center gap-2"
           >
             <div className="w-8 h-8 bg-[#6366F1] rounded-lg flex items-center justify-center">
@@ -47,6 +47,13 @@ export default function Navbar() {
           <div className="hidden md:flex items-center gap-4">
             {user ? (
               <>
+                <button
+                  onClick={() => router.push('/dashboard')}
+                  className="text-[#475569] hover:text-[#0F172A] font-medium"
+                >
+                  Dashboard
+                </button>
+                
                 <div className="flex items-center gap-3 px-4 py-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg">
                   <User className="w-4 h-4 text-[#64748B]" />
                   <div className="text-sm">
@@ -114,6 +121,15 @@ export default function Navbar() {
                     </div>
                   </div>
                 </div>
+                <button 
+                  onClick={() => {
+                    router.push('/dashboard');
+                    setMobileMenuOpen(false);
+                  }}
+                  className="block w-full text-left px-4 py-2 text-[#475569] hover:text-[#0F172A] font-medium"
+                >
+                  Dashboard
+                </button>
                 <button 
                   onClick={handleLogout}
                   className="block w-full text-left px-4 py-2 text-[#475569] hover:text-[#0F172A]"
