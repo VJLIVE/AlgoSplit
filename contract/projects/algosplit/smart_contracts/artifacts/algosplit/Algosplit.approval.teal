@@ -1,0 +1,1276 @@
+#pragma version 11
+#pragma typetrack false
+
+// algopy.arc4.ARC4Contract.approval_program() -> uint64:
+main:
+    intcblock 0 1 8 32 448
+    bytecblock 0x00 0x62696c6c5f 0x5f6d656d6265725f 0x151f7c75 0x151f7c7580 "bill_counter" 0x757365725f 0x0000
+    txn ApplicationID
+    bnz main_after_if_else@2
+    // smart_contracts/algosplit/contract.py:36
+    // self.bill_counter = UInt64(0)
+    bytec 5 // "bill_counter"
+    intc_0 // 0
+    app_global_put
+
+main_after_if_else@2:
+    // smart_contracts/algosplit/contract.py:31
+    // class Algosplit(ARC4Contract):
+    txn NumAppArgs
+    bz main___algopy_default_create@19
+    txn OnCompletion
+    !
+    assert
+    txn ApplicationID
+    assert
+    pushbytess 0x63aa61b3 0x04203896 0x8d4f5edc 0x1b4a7b67 0x1c823ce8 0x3e899308 0xeadd2cf0 0x96ac5ec0 0x97569ff2 0x2d7b0e1a // method "create_bill(address[],uint64[],pay)uint64", method "pay_bill(uint64,pay)bool", method "get_bill(uint64)(address,uint64,uint64,uint64,bool)", method "get_member(uint64,address)(uint64,bool)", method "get_user_bills(address)uint64[]", method "get_bill_counter()uint64", method "cancel_bill(uint64)bool", method "update_member_share(uint64,address,uint64)bool", method "remove_member(uint64,address)bool", method "add_member(uint64,address,uint64,pay)bool"
+    txna ApplicationArgs 0
+    match create_bill pay_bill get_bill get_member get_user_bills get_bill_counter cancel_bill update_member_share remove_member add_member
+    err
+
+main___algopy_default_create@19:
+    txn OnCompletion
+    !
+    txn ApplicationID
+    !
+    &&
+    return
+
+
+// smart_contracts.algosplit.contract.Algosplit.create_bill[routing]() -> void:
+create_bill:
+    intc_0 // 0
+    dup
+    // smart_contracts/algosplit/contract.py:38
+    // @abimethod()
+    txna ApplicationArgs 1
+    dupn 2
+    intc_0 // 0
+    extract_uint16 // on error: invalid array length header
+    dup
+    cover 2
+    dup
+    intc_3 // 32
+    *
+    pushint 2
+    +
+    uncover 2
+    len
+    ==
+    assert // invalid number of bytes for arc4.dynamic_array<account>
+    txna ApplicationArgs 2
+    dup
+    cover 2
+    dup
+    intc_0 // 0
+    extract_uint16 // on error: invalid array length header
+    dup
+    intc_2 // 8
+    *
+    pushint 2
+    +
+    uncover 2
+    len
+    ==
+    assert // invalid number of bytes for arc4.dynamic_array<arc4.uint64>
+    txn GroupIndex
+    intc_1 // 1
+    -
+    dup
+    gtxns TypeEnum
+    intc_1 // pay
+    ==
+    assert // transaction type is pay
+    // smart_contracts/algosplit/contract.py:56-57
+    // # Validate inputs
+    // assert members.length == shares.length, "Members and shares length mismatch"
+    dig 2
+    uncover 2
+    ==
+    assert // Members and shares length mismatch
+    // smart_contracts/algosplit/contract.py:58
+    // assert members.length > 0, "At least one member required"
+    swap
+    assert // At least one member required
+    // smart_contracts/algosplit/contract.py:60-61
+    // # Verify MBR payment
+    // assert mbr_payment.receiver == Global.current_application_address, "MBR payment must go to app"
+    gtxns Receiver
+    global CurrentApplicationAddress
+    ==
+    assert // MBR payment must go to app
+    // smart_contracts/algosplit/contract.py:63-64
+    // # Increment bill counter
+    // self.bill_counter += 1
+    intc_0 // 0
+    bytec 5 // "bill_counter"
+    app_global_get_ex
+    assert // check self.bill_counter exists
+    intc_1 // 1
+    +
+    dup
+    bytec 5 // "bill_counter"
+    swap
+    app_global_put
+    // smart_contracts/algosplit/contract.py:67-68
+    // # Calculate total amount
+    // total_amount = UInt64(0)
+    intc_0 // 0
+    // smart_contracts/algosplit/contract.py:69
+    // for i in urange(members.length):
+    dup
+
+create_bill_for_header@2:
+    // smart_contracts/algosplit/contract.py:69
+    // for i in urange(members.length):
+    dup
+    dig 5
+    <
+    bz create_bill_after_for@5
+    // smart_contracts/algosplit/contract.py:70
+    // share_amount = shares[i].native
+    dig 3
+    extract 2 0
+    dig 1
+    dup
+    cover 2
+    intc_2 // 8
+    *
+    extract_uint64
+    // smart_contracts/algosplit/contract.py:71
+    // assert share_amount > 0, "Share must be greater than 0"
+    dup
+    assert // Share must be greater than 0
+    // smart_contracts/algosplit/contract.py:72
+    // total_amount += share_amount
+    dig 3
+    +
+    bury 3
+    // smart_contracts/algosplit/contract.py:69
+    // for i in urange(members.length):
+    intc_1 // 1
+    +
+    bury 1
+    b create_bill_for_header@2
+
+create_bill_after_for@5:
+    // smart_contracts/algosplit/contract.py:407
+    // return Bytes(b"bill_") + op.itob(bill_id)
+    dig 2
+    itob
+    dup
+    bury 8
+    bytec_1 // 0x62696c6c5f
+    swap
+    concat
+    dup
+    bury 9
+    // smart_contracts/algosplit/contract.py:77
+    // creator=Txn.sender,
+    txn Sender
+    // smart_contracts/algosplit/contract.py:76-82
+    // bill = Bill(
+    //     creator=Txn.sender,
+    //     total_amount=total_amount,
+    //     member_count=members.length,
+    //     settled_count=UInt64(0),
+    //     is_settled=Bool(False),
+    // )
+    dig 3
+    itob
+    concat
+    dig 6
+    itob
+    concat
+    // smart_contracts/algosplit/contract.py:80
+    // settled_count=UInt64(0),
+    intc_0 // 0
+    // smart_contracts/algosplit/contract.py:76-82
+    // bill = Bill(
+    //     creator=Txn.sender,
+    //     total_amount=total_amount,
+    //     member_count=members.length,
+    //     settled_count=UInt64(0),
+    //     is_settled=Bool(False),
+    // )
+    itob
+    concat
+    // smart_contracts/algosplit/contract.py:81
+    // is_settled=Bool(False),
+    bytec_0 // 0x00
+    // smart_contracts/algosplit/contract.py:76-82
+    // bill = Bill(
+    //     creator=Txn.sender,
+    //     total_amount=total_amount,
+    //     member_count=members.length,
+    //     settled_count=UInt64(0),
+    //     is_settled=Bool(False),
+    // )
+    concat
+    // smart_contracts/algosplit/contract.py:83
+    // op.Box.put(bill_key, bill.bytes)
+    box_put
+    // smart_contracts/algosplit/contract.py:85-86
+    // # Create member boxes
+    // for i in urange(members.length):
+    intc_0 // 0
+    bury 1
+
+create_bill_for_header@6:
+    // smart_contracts/algosplit/contract.py:85-86
+    // # Create member boxes
+    // for i in urange(members.length):
+    dup
+    dig 5
+    <
+    bz create_bill_after_for@9
+    // smart_contracts/algosplit/contract.py:87
+    // member_address = members[i]
+    dig 5
+    extract 2 0
+    dig 1
+    dup
+    cover 2
+    intc_3 // 32
+    *
+    intc_3 // 32
+    extract3 // on error: index access is out of bounds
+    // smart_contracts/algosplit/contract.py:88
+    // share_amount = shares[i].native
+    dig 5
+    extract 2 0
+    dig 2
+    intc_2 // 8
+    *
+    intc_2 // 8
+    extract3 // on error: index access is out of bounds
+    // smart_contracts/algosplit/contract.py:412
+    // return Bytes(b"bill_") + op.itob(bill_id) + Bytes(b"_member_") + member.bytes
+    dig 10
+    bytec_2 // 0x5f6d656d6265725f
+    concat
+    dig 2
+    concat
+    // smart_contracts/algosplit/contract.py:91-94
+    // member = Member(
+    //     share=share_amount,
+    //     paid=Bool(False),
+    // )
+    swap
+    // smart_contracts/algosplit/contract.py:81
+    // is_settled=Bool(False),
+    bytec_0 // 0x00
+    // smart_contracts/algosplit/contract.py:91-94
+    // member = Member(
+    //     share=share_amount,
+    //     paid=Bool(False),
+    // )
+    concat
+    // smart_contracts/algosplit/contract.py:95
+    // op.Box.put(member_key, member.bytes)
+    box_put
+    // smart_contracts/algosplit/contract.py:97-98
+    // # Add bill to user's participation list
+    // self._add_bill_to_user(member_address, bill_id)
+    dig 4
+    callsub _add_bill_to_user
+    // smart_contracts/algosplit/contract.py:85-86
+    // # Create member boxes
+    // for i in urange(members.length):
+    intc_1 // 1
+    +
+    bury 1
+    b create_bill_for_header@6
+
+create_bill_after_for@9:
+    // smart_contracts/algosplit/contract.py:38
+    // @abimethod()
+    bytec_3 // 0x151f7c75
+    dig 7
+    concat
+    log
+    intc_1 // 1
+    return
+
+
+// smart_contracts.algosplit.contract.Algosplit.pay_bill[routing]() -> void:
+pay_bill:
+    // smart_contracts/algosplit/contract.py:102
+    // @abimethod()
+    txna ApplicationArgs 1
+    dup
+    len
+    intc_2 // 8
+    ==
+    assert // invalid number of bytes for arc4.uint64
+    txn GroupIndex
+    intc_1 // 1
+    -
+    dup
+    gtxns TypeEnum
+    intc_1 // pay
+    ==
+    assert // transaction type is pay
+    // smart_contracts/algosplit/contract.py:118
+    // bill_id_native = bill_id.native
+    swap
+    btoi
+    // smart_contracts/algosplit/contract.py:407
+    // return Bytes(b"bill_") + op.itob(bill_id)
+    itob
+    bytec_1 // 0x62696c6c5f
+    swap
+    concat
+    dup
+    cover 2
+    // smart_contracts/algosplit/contract.py:122
+    // bill_bytes, exists = op.Box.get(bill_key)
+    dup
+    box_get
+    // smart_contracts/algosplit/contract.py:123
+    // assert exists, "Bill does not exist"
+    assert // Bill does not exist
+    // smart_contracts/algosplit/contract.py:126
+    // assert not bill.is_settled.native, "Bill already settled"
+    dup
+    intc 4 // 448
+    getbit
+    bytec_0 // 0x00
+    intc_0 // 0
+    uncover 2
+    setbit
+    intc_0 // 0
+    getbit
+    !
+    assert // Bill already settled
+    // smart_contracts/algosplit/contract.py:128-129
+    // # Load member
+    // member_key = self._get_member_key(bill_id_native, Txn.sender)
+    txn Sender
+    // smart_contracts/algosplit/contract.py:412
+    // return Bytes(b"bill_") + op.itob(bill_id) + Bytes(b"_member_") + member.bytes
+    uncover 2
+    bytec_2 // 0x5f6d656d6265725f
+    concat
+    swap
+    concat
+    // smart_contracts/algosplit/contract.py:130
+    // member_bytes, member_exists = op.Box.get(member_key)
+    dup
+    box_get
+    // smart_contracts/algosplit/contract.py:131
+    // assert member_exists, "Not a member of this bill"
+    assert // Not a member of this bill
+    // smart_contracts/algosplit/contract.py:134
+    // assert not member.paid.native, "Already paid"
+    dup
+    pushint 64
+    getbit
+    bytec_0 // 0x00
+    intc_0 // 0
+    uncover 2
+    setbit
+    intc_0 // 0
+    getbit
+    !
+    assert // Already paid
+    // smart_contracts/algosplit/contract.py:136-137
+    // # Verify payment transaction
+    // assert payment.sender == Txn.sender, "Payment sender mismatch"
+    dig 3
+    gtxns Sender
+    txn Sender
+    ==
+    assert // Payment sender mismatch
+    // smart_contracts/algosplit/contract.py:138
+    // assert payment.receiver == bill.creator, "Payment must go to bill creator"
+    dig 3
+    gtxns Receiver
+    dig 3
+    extract 0 32
+    ==
+    assert // Payment must go to bill creator
+    // smart_contracts/algosplit/contract.py:139
+    // assert payment.amount == member.share, "Payment amount must match share"
+    uncover 3
+    gtxns Amount
+    dig 1
+    intc_0 // 0
+    extract_uint64
+    ==
+    assert // Payment amount must match share
+    // smart_contracts/algosplit/contract.py:141-142
+    // # Update member status
+    // member.paid = Bool(True)
+    pushint 64
+    intc_1 // 1
+    setbit
+    // smart_contracts/algosplit/contract.py:143
+    // op.Box.put(member_key, member.bytes)
+    box_put
+    // smart_contracts/algosplit/contract.py:145-146
+    // # Update bill status
+    // bill.settled_count += 1
+    dup
+    pushint 48
+    extract_uint64
+    intc_1 // 1
+    +
+    itob
+    replace2 48
+    dupn 2
+    // smart_contracts/algosplit/contract.py:147
+    // if bill.settled_count == bill.member_count:
+    pushint 48
+    extract_uint64
+    swap
+    pushint 40
+    extract_uint64
+    ==
+    bz pay_bill_after_if_else@3
+    // smart_contracts/algosplit/contract.py:148
+    // bill.is_settled = Bool(True)
+    intc 4 // 448
+    // smart_contracts/algosplit/contract.py:141-142
+    // # Update member status
+    // member.paid = Bool(True)
+    intc_1 // 1
+    // smart_contracts/algosplit/contract.py:148
+    // bill.is_settled = Bool(True)
+    setbit
+
+pay_bill_after_if_else@3:
+    // smart_contracts/algosplit/contract.py:149
+    // op.Box.put(bill_key, bill.bytes)
+    dig 1
+    swap
+    box_put
+    // smart_contracts/algosplit/contract.py:102
+    // @abimethod()
+    bytec 4 // 0x151f7c7580
+    log
+    intc_1 // 1
+    return
+
+
+// smart_contracts.algosplit.contract.Algosplit.get_bill[routing]() -> void:
+get_bill:
+    // smart_contracts/algosplit/contract.py:153
+    // @abimethod(readonly=True)
+    txna ApplicationArgs 1
+    dup
+    len
+    intc_2 // 8
+    ==
+    assert // invalid number of bytes for arc4.uint64
+    // smart_contracts/algosplit/contract.py:164
+    // bill_key = self._get_bill_key(bill_id.native)
+    btoi
+    // smart_contracts/algosplit/contract.py:407
+    // return Bytes(b"bill_") + op.itob(bill_id)
+    itob
+    bytec_1 // 0x62696c6c5f
+    swap
+    concat
+    // smart_contracts/algosplit/contract.py:165
+    // bill_bytes, exists = op.Box.get(bill_key)
+    box_get
+    // smart_contracts/algosplit/contract.py:166
+    // assert exists, "Bill does not exist"
+    assert // Bill does not exist
+    // smart_contracts/algosplit/contract.py:153
+    // @abimethod(readonly=True)
+    bytec_3 // 0x151f7c75
+    swap
+    concat
+    log
+    intc_1 // 1
+    return
+
+
+// smart_contracts.algosplit.contract.Algosplit.get_member[routing]() -> void:
+get_member:
+    // smart_contracts/algosplit/contract.py:169
+    // @abimethod(readonly=True)
+    txna ApplicationArgs 1
+    dup
+    len
+    intc_2 // 8
+    ==
+    assert // invalid number of bytes for arc4.uint64
+    txna ApplicationArgs 2
+    dup
+    len
+    intc_3 // 32
+    ==
+    assert // invalid number of bytes for arc4.static_array<arc4.uint8, 32>
+    // smart_contracts/algosplit/contract.py:181
+    // member_key = self._get_member_key(bill_id.native, member)
+    swap
+    btoi
+    // smart_contracts/algosplit/contract.py:412
+    // return Bytes(b"bill_") + op.itob(bill_id) + Bytes(b"_member_") + member.bytes
+    itob
+    bytec_1 // 0x62696c6c5f
+    swap
+    concat
+    bytec_2 // 0x5f6d656d6265725f
+    concat
+    swap
+    concat
+    // smart_contracts/algosplit/contract.py:182
+    // member_bytes, exists = op.Box.get(member_key)
+    box_get
+    // smart_contracts/algosplit/contract.py:183
+    // assert exists, "Member not found"
+    assert // Member not found
+    // smart_contracts/algosplit/contract.py:169
+    // @abimethod(readonly=True)
+    bytec_3 // 0x151f7c75
+    swap
+    concat
+    log
+    intc_1 // 1
+    return
+
+
+// smart_contracts.algosplit.contract.Algosplit.get_user_bills[routing]() -> void:
+get_user_bills:
+    // smart_contracts/algosplit/contract.py:186
+    // @abimethod(readonly=True)
+    txna ApplicationArgs 1
+    dup
+    len
+    intc_3 // 32
+    ==
+    assert // invalid number of bytes for arc4.static_array<arc4.uint8, 32>
+    // smart_contracts/algosplit/contract.py:417
+    // return Bytes(b"user_") + user.bytes
+    bytec 6 // 0x757365725f
+    swap
+    concat
+    // smart_contracts/algosplit/contract.py:198
+    // user_bills_bytes, exists = op.Box.get(user_key)
+    box_get
+    // smart_contracts/algosplit/contract.py:200
+    // if not exists:
+    bnz get_user_bills_after_if_else@3
+    // smart_contracts/algosplit/contract.py:201
+    // return DynamicArray[ARC4UInt64]()
+    bytec 7 // 0x0000
+
+get_user_bills_after_inlined_smart_contracts.algosplit.contract.Algosplit.get_user_bills@4:
+    // smart_contracts/algosplit/contract.py:186
+    // @abimethod(readonly=True)
+    bytec_3 // 0x151f7c75
+    swap
+    concat
+    log
+    intc_1 // 1
+    return
+
+get_user_bills_after_if_else@3:
+    dup
+    // smart_contracts/algosplit/contract.py:186
+    // @abimethod(readonly=True)
+    b get_user_bills_after_inlined_smart_contracts.algosplit.contract.Algosplit.get_user_bills@4
+
+
+// smart_contracts.algosplit.contract.Algosplit.get_bill_counter[routing]() -> void:
+get_bill_counter:
+    // smart_contracts/algosplit/contract.py:208
+    // return ARC4UInt64(self.bill_counter)
+    intc_0 // 0
+    bytec 5 // "bill_counter"
+    app_global_get_ex
+    assert // check self.bill_counter exists
+    itob
+    // smart_contracts/algosplit/contract.py:205
+    // @abimethod(readonly=True)
+    bytec_3 // 0x151f7c75
+    swap
+    concat
+    log
+    intc_1 // 1
+    return
+
+
+// smart_contracts.algosplit.contract.Algosplit.cancel_bill[routing]() -> void:
+cancel_bill:
+    // smart_contracts/algosplit/contract.py:210
+    // @abimethod()
+    txna ApplicationArgs 1
+    dup
+    len
+    intc_2 // 8
+    ==
+    assert // invalid number of bytes for arc4.uint64
+    // smart_contracts/algosplit/contract.py:221
+    // bill_id_native = bill_id.native
+    btoi
+    // smart_contracts/algosplit/contract.py:407
+    // return Bytes(b"bill_") + op.itob(bill_id)
+    itob
+    bytec_1 // 0x62696c6c5f
+    swap
+    concat
+    // smart_contracts/algosplit/contract.py:225
+    // bill_bytes, exists = op.Box.get(bill_key)
+    dup
+    box_get
+    // smart_contracts/algosplit/contract.py:226
+    // assert exists, "Bill does not exist"
+    assert // Bill does not exist
+    // smart_contracts/algosplit/contract.py:229-230
+    // # Only creator can cancel
+    // assert Txn.sender == bill.creator, "Only creator can cancel bill"
+    txn Sender
+    dig 1
+    extract 0 32
+    ==
+    assert // Only creator can cancel bill
+    // smart_contracts/algosplit/contract.py:232-233
+    // # Can only cancel if no payments made
+    // assert bill.settled_count == 0, "Cannot cancel bill with payments"
+    dup
+    pushint 48
+    extract_uint64
+    !
+    assert // Cannot cancel bill with payments
+    // smart_contracts/algosplit/contract.py:235-236
+    // # Mark as settled to prevent future payments
+    // bill.is_settled = Bool(True)
+    intc 4 // 448
+    intc_1 // 1
+    setbit
+    // smart_contracts/algosplit/contract.py:237
+    // op.Box.put(bill_key, bill.bytes)
+    box_put
+    // smart_contracts/algosplit/contract.py:210
+    // @abimethod()
+    bytec 4 // 0x151f7c7580
+    log
+    intc_1 // 1
+    return
+
+
+// smart_contracts.algosplit.contract.Algosplit.update_member_share[routing]() -> void:
+update_member_share:
+    // smart_contracts/algosplit/contract.py:241
+    // @abimethod()
+    txna ApplicationArgs 1
+    dup
+    len
+    intc_2 // 8
+    ==
+    assert // invalid number of bytes for arc4.uint64
+    txna ApplicationArgs 2
+    dup
+    len
+    intc_3 // 32
+    ==
+    assert // invalid number of bytes for arc4.static_array<arc4.uint8, 32>
+    txna ApplicationArgs 3
+    dup
+    len
+    intc_2 // 8
+    ==
+    assert // invalid number of bytes for arc4.uint64
+    // smart_contracts/algosplit/contract.py:259
+    // bill_id_native = bill_id.native
+    uncover 2
+    btoi
+    // smart_contracts/algosplit/contract.py:260
+    // new_share_native = new_share.native
+    dig 1
+    btoi
+    // smart_contracts/algosplit/contract.py:407
+    // return Bytes(b"bill_") + op.itob(bill_id)
+    swap
+    itob
+    bytec_1 // 0x62696c6c5f
+    swap
+    concat
+    // smart_contracts/algosplit/contract.py:264
+    // bill_bytes, exists = op.Box.get(bill_key)
+    dup
+    box_get
+    // smart_contracts/algosplit/contract.py:265
+    // assert exists, "Bill does not exist"
+    assert // Bill does not exist
+    // smart_contracts/algosplit/contract.py:268-269
+    // # Only creator can update
+    // assert Txn.sender == bill.creator, "Only creator can update shares"
+    txn Sender
+    dig 1
+    extract 0 32
+    ==
+    assert // Only creator can update shares
+    // smart_contracts/algosplit/contract.py:270
+    // assert not bill.is_settled.native, "Cannot update settled bill"
+    dup
+    intc 4 // 448
+    getbit
+    bytec_0 // 0x00
+    intc_0 // 0
+    uncover 2
+    setbit
+    intc_0 // 0
+    getbit
+    !
+    assert // Cannot update settled bill
+    // smart_contracts/algosplit/contract.py:412
+    // return Bytes(b"bill_") + op.itob(bill_id) + Bytes(b"_member_") + member.bytes
+    dig 1
+    bytec_2 // 0x5f6d656d6265725f
+    concat
+    uncover 5
+    concat
+    // smart_contracts/algosplit/contract.py:274
+    // member_bytes, member_exists = op.Box.get(member_key)
+    dup
+    box_get
+    // smart_contracts/algosplit/contract.py:275
+    // assert member_exists, "Member not found"
+    assert // Member not found
+    // smart_contracts/algosplit/contract.py:278-279
+    // # Can only update if member hasn't paid
+    // assert not member_data.paid.native, "Cannot update paid member"
+    dup
+    pushint 64
+    getbit
+    bytec_0 // 0x00
+    intc_0 // 0
+    uncover 2
+    setbit
+    intc_0 // 0
+    getbit
+    !
+    assert // Cannot update paid member
+    // smart_contracts/algosplit/contract.py:280
+    // assert new_share_native > 0, "Share must be greater than 0"
+    dig 4
+    assert // Share must be greater than 0
+    // smart_contracts/algosplit/contract.py:282-283
+    // # Update total amount
+    // old_share = member_data.share
+    dup
+    intc_0 // 0
+    extract_uint64
+    // smart_contracts/algosplit/contract.py:284
+    // bill.total_amount = bill.total_amount - old_share + new_share_native
+    dig 3
+    intc_3 // 32
+    extract_uint64
+    swap
+    -
+    uncover 5
+    +
+    itob
+    uncover 3
+    swap
+    replace2 32
+    // smart_contracts/algosplit/contract.py:286-287
+    // # Update member share
+    // member_data.share = new_share_native
+    swap
+    uncover 4
+    replace2 0
+    // smart_contracts/algosplit/contract.py:288
+    // op.Box.put(member_key, member_data.bytes)
+    uncover 2
+    swap
+    box_put
+    // smart_contracts/algosplit/contract.py:289
+    // op.Box.put(bill_key, bill.bytes)
+    box_put
+    // smart_contracts/algosplit/contract.py:241
+    // @abimethod()
+    bytec 4 // 0x151f7c7580
+    log
+    intc_1 // 1
+    return
+
+
+// smart_contracts.algosplit.contract.Algosplit.remove_member[routing]() -> void:
+remove_member:
+    intc_0 // 0
+    dup
+    pushbytes ""
+    dupn 2
+    // smart_contracts/algosplit/contract.py:293
+    // @abimethod()
+    txna ApplicationArgs 1
+    dup
+    len
+    intc_2 // 8
+    ==
+    assert // invalid number of bytes for arc4.uint64
+    txna ApplicationArgs 2
+    dup
+    len
+    intc_3 // 32
+    ==
+    assert // invalid number of bytes for arc4.static_array<arc4.uint8, 32>
+    // smart_contracts/algosplit/contract.py:309
+    // bill_id_native = bill_id.native
+    swap
+    btoi
+    dup
+    cover 2
+    // smart_contracts/algosplit/contract.py:407
+    // return Bytes(b"bill_") + op.itob(bill_id)
+    itob
+    bytec_1 // 0x62696c6c5f
+    swap
+    concat
+    // smart_contracts/algosplit/contract.py:313
+    // bill_bytes, exists = op.Box.get(bill_key)
+    dup
+    box_get
+    // smart_contracts/algosplit/contract.py:314
+    // assert exists, "Bill does not exist"
+    assert // Bill does not exist
+    // smart_contracts/algosplit/contract.py:317-318
+    // # Only creator can remove
+    // assert Txn.sender == bill.creator, "Only creator can remove members"
+    txn Sender
+    dig 1
+    extract 0 32
+    ==
+    assert // Only creator can remove members
+    // smart_contracts/algosplit/contract.py:319
+    // assert not bill.is_settled.native, "Cannot modify settled bill"
+    dup
+    intc 4 // 448
+    getbit
+    bytec_0 // 0x00
+    intc_0 // 0
+    uncover 2
+    setbit
+    intc_0 // 0
+    getbit
+    !
+    assert // Cannot modify settled bill
+    // smart_contracts/algosplit/contract.py:320
+    // assert bill.member_count > 1, "Cannot remove last member"
+    dup
+    pushint 40
+    extract_uint64
+    intc_1 // 1
+    >
+    assert // Cannot remove last member
+    // smart_contracts/algosplit/contract.py:412
+    // return Bytes(b"bill_") + op.itob(bill_id) + Bytes(b"_member_") + member.bytes
+    dig 1
+    bytec_2 // 0x5f6d656d6265725f
+    concat
+    dig 3
+    concat
+    // smart_contracts/algosplit/contract.py:324
+    // member_bytes, member_exists = op.Box.get(member_key)
+    dup
+    box_get
+    // smart_contracts/algosplit/contract.py:325
+    // assert member_exists, "Member not found"
+    assert // Member not found
+    // smart_contracts/algosplit/contract.py:328-329
+    // # Can only remove if member hasn't paid
+    // assert not member_data.paid.native, "Cannot remove paid member"
+    dup
+    pushint 64
+    getbit
+    bytec_0 // 0x00
+    intc_0 // 0
+    uncover 2
+    setbit
+    intc_0 // 0
+    getbit
+    !
+    assert // Cannot remove paid member
+    // smart_contracts/algosplit/contract.py:331-332
+    // # Update bill
+    // bill.total_amount -= member_data.share
+    dig 2
+    intc_3 // 32
+    extract_uint64
+    swap
+    intc_0 // 0
+    extract_uint64
+    -
+    itob
+    uncover 2
+    swap
+    replace2 32
+    // smart_contracts/algosplit/contract.py:333
+    // bill.member_count -= 1
+    dup
+    pushint 40
+    extract_uint64
+    intc_1 // 1
+    -
+    itob
+    replace2 40
+    // smart_contracts/algosplit/contract.py:334
+    // op.Box.put(bill_key, bill.bytes)
+    uncover 2
+    swap
+    box_put
+    // smart_contracts/algosplit/contract.py:336-337
+    // # Delete member box
+    // deleted = op.Box.delete(member_key)
+    box_del
+    // smart_contracts/algosplit/contract.py:338
+    // assert deleted, "Failed to delete member box"
+    assert // Failed to delete member box
+    // smart_contracts/algosplit/contract.py:417
+    // return Bytes(b"user_") + user.bytes
+    bytec 6 // 0x757365725f
+    swap
+    concat
+    dup
+    // smart_contracts/algosplit/contract.py:439
+    // user_bills_bytes, exists = op.Box.get(user_key)
+    box_get
+    // smart_contracts/algosplit/contract.py:441
+    // if exists:
+    bz remove_member_after_if_else@14
+    // smart_contracts/algosplit/contract.py:444-445
+    // # Find and remove the bill_id
+    // for i in urange(user_bills.length):
+    dup
+    intc_0 // 0
+    extract_uint16 // on error: invalid array length header
+    bury 6
+    intc_0 // 0
+    bury 5
+
+remove_member_for_header@3:
+    // smart_contracts/algosplit/contract.py:444-445
+    // # Find and remove the bill_id
+    // for i in urange(user_bills.length):
+    dig 4
+    dig 6
+    <
+    bz remove_member_after_if_else@14
+    // smart_contracts/algosplit/contract.py:446
+    // if user_bills[i].native == bill_id:
+    dup
+    extract 2 0
+    dup
+    bury 9
+    dig 5
+    intc_2 // 8
+    *
+    extract_uint64
+    dig 3
+    ==
+    bz remove_member_after_if_else@13
+    // smart_contracts/algosplit/contract.py:447-448
+    // # Create new array without this bill
+    // new_bills = DynamicArray[ARC4UInt64]()
+    bytec 7 // 0x0000
+    bury 7
+    // smart_contracts/algosplit/contract.py:449
+    // for j in urange(user_bills.length):
+    intc_0 // 0
+    bury 4
+
+remove_member_for_header@6:
+    // smart_contracts/algosplit/contract.py:449
+    // for j in urange(user_bills.length):
+    dig 3
+    dig 6
+    <
+    bz remove_member_after_for@10
+    // smart_contracts/algosplit/contract.py:450
+    // if j != i:
+    dig 3
+    dig 5
+    !=
+    bz remove_member_after_if_else@9
+    // smart_contracts/algosplit/contract.py:451
+    // new_bills.append(user_bills[j])
+    dig 3
+    intc_2 // 8
+    *
+    dig 8
+    swap
+    intc_2 // 8
+    extract3 // on error: index access is out of bounds
+    dig 7
+    dup
+    uncover 2
+    concat // on error: max array length exceeded
+    swap
+    intc_0 // 0
+    extract_uint16
+    intc_1 // 1
+    +
+    itob
+    extract 6 2
+    replace2 0
+    bury 7
+
+remove_member_after_if_else@9:
+    // smart_contracts/algosplit/contract.py:449
+    // for j in urange(user_bills.length):
+    dig 3
+    intc_1 // 1
+    +
+    bury 4
+    b remove_member_for_header@6
+
+remove_member_after_for@10:
+    // smart_contracts/algosplit/contract.py:453
+    // if new_bills.length > 0:
+    dig 6
+    intc_0 // 0
+    extract_uint16 // on error: invalid array length header
+    bz remove_member_else_body@12
+    // smart_contracts/algosplit/contract.py:454
+    // op.Box.put(user_key, new_bills.bytes)
+    dig 1
+    dig 7
+    box_put
+
+remove_member_after_if_else@14:
+    // smart_contracts/algosplit/contract.py:293
+    // @abimethod()
+    bytec 4 // 0x151f7c7580
+    log
+    intc_1 // 1
+    return
+
+remove_member_else_body@12:
+    // smart_contracts/algosplit/contract.py:456-457
+    // # Delete box if empty
+    // deleted = op.Box.delete(user_key)
+    dig 1
+    box_del
+    // smart_contracts/algosplit/contract.py:458
+    // assert deleted, "Failed to delete user box"
+    assert // Failed to delete user box
+    b remove_member_after_if_else@14
+
+remove_member_after_if_else@13:
+    // smart_contracts/algosplit/contract.py:444-445
+    // # Find and remove the bill_id
+    // for i in urange(user_bills.length):
+    dig 4
+    intc_1 // 1
+    +
+    bury 5
+    b remove_member_for_header@3
+
+
+// smart_contracts.algosplit.contract.Algosplit.add_member[routing]() -> void:
+add_member:
+    // smart_contracts/algosplit/contract.py:345
+    // @abimethod()
+    txna ApplicationArgs 1
+    dup
+    len
+    intc_2 // 8
+    ==
+    assert // invalid number of bytes for arc4.uint64
+    txna ApplicationArgs 2
+    dup
+    len
+    intc_3 // 32
+    ==
+    assert // invalid number of bytes for arc4.static_array<arc4.uint8, 32>
+    txna ApplicationArgs 3
+    dup
+    len
+    intc_2 // 8
+    ==
+    assert // invalid number of bytes for arc4.uint64
+    txn GroupIndex
+    intc_1 // 1
+    -
+    dup
+    gtxns TypeEnum
+    intc_1 // pay
+    ==
+    assert // transaction type is pay
+    // smart_contracts/algosplit/contract.py:365
+    // bill_id_native = bill_id.native
+    uncover 3
+    btoi
+    // smart_contracts/algosplit/contract.py:366
+    // share_native = share.native
+    uncover 2
+    btoi
+    // smart_contracts/algosplit/contract.py:368-369
+    // # Verify MBR payment
+    // assert mbr_payment.receiver == Global.current_application_address, "MBR payment must go to app"
+    uncover 2
+    gtxns Receiver
+    global CurrentApplicationAddress
+    ==
+    assert // MBR payment must go to app
+    // smart_contracts/algosplit/contract.py:407
+    // return Bytes(b"bill_") + op.itob(bill_id)
+    dig 1
+    itob
+    bytec_1 // 0x62696c6c5f
+    swap
+    concat
+    // smart_contracts/algosplit/contract.py:373
+    // bill_bytes, exists = op.Box.get(bill_key)
+    dup
+    box_get
+    // smart_contracts/algosplit/contract.py:374
+    // assert exists, "Bill does not exist"
+    assert // Bill does not exist
+    // smart_contracts/algosplit/contract.py:377-378
+    // # Only creator can add
+    // assert Txn.sender == bill.creator, "Only creator can add members"
+    txn Sender
+    dig 1
+    extract 0 32
+    ==
+    assert // Only creator can add members
+    // smart_contracts/algosplit/contract.py:379
+    // assert not bill.is_settled.native, "Cannot modify settled bill"
+    dup
+    intc 4 // 448
+    getbit
+    bytec_0 // 0x00
+    intc_0 // 0
+    uncover 2
+    setbit
+    intc_0 // 0
+    getbit
+    !
+    assert // Cannot modify settled bill
+    // smart_contracts/algosplit/contract.py:380
+    // assert share_native > 0, "Share must be greater than 0"
+    dig 2
+    assert // Share must be greater than 0
+    // smart_contracts/algosplit/contract.py:412
+    // return Bytes(b"bill_") + op.itob(bill_id) + Bytes(b"_member_") + member.bytes
+    dig 1
+    bytec_2 // 0x5f6d656d6265725f
+    concat
+    dig 5
+    concat
+    // smart_contracts/algosplit/contract.py:384
+    // existing_member_bytes, member_exists = op.Box.get(member_key)
+    dup
+    box_len
+    bury 1
+    // smart_contracts/algosplit/contract.py:385
+    // assert not member_exists, "Member already exists"
+    !
+    assert // Member already exists
+    // smart_contracts/algosplit/contract.py:387-391
+    // # Create member box
+    // new_member = Member(
+    //     share=share_native,
+    //     paid=Bool(False),
+    // )
+    dig 3
+    itob
+    // smart_contracts/algosplit/contract.py:390
+    // paid=Bool(False),
+    bytec_0 // 0x00
+    // smart_contracts/algosplit/contract.py:387-391
+    // # Create member box
+    // new_member = Member(
+    //     share=share_native,
+    //     paid=Bool(False),
+    // )
+    concat
+    // smart_contracts/algosplit/contract.py:392
+    // op.Box.put(member_key, new_member.bytes)
+    box_put
+    // smart_contracts/algosplit/contract.py:394-395
+    // # Update bill
+    // bill.total_amount += share_native
+    dup
+    intc_3 // 32
+    extract_uint64
+    uncover 3
+    +
+    itob
+    replace2 32
+    // smart_contracts/algosplit/contract.py:396
+    // bill.member_count += 1
+    dup
+    pushint 40
+    extract_uint64
+    intc_1 // 1
+    +
+    itob
+    replace2 40
+    // smart_contracts/algosplit/contract.py:397
+    // op.Box.put(bill_key, bill.bytes)
+    box_put
+    // smart_contracts/algosplit/contract.py:399-400
+    // # Add bill to user's participation list
+    // self._add_bill_to_user(member, bill_id_native)
+    callsub _add_bill_to_user
+    // smart_contracts/algosplit/contract.py:345
+    // @abimethod()
+    bytec 4 // 0x151f7c7580
+    log
+    intc_1 // 1
+    return
+
+
+// smart_contracts.algosplit.contract.Algosplit._add_bill_to_user(user: bytes, bill_id: uint64) -> void:
+_add_bill_to_user:
+    // smart_contracts/algosplit/contract.py:419-420
+    // @subroutine
+    // def _add_bill_to_user(self, user: Account, bill_id: UInt64) -> None:
+    proto 2 0
+    // smart_contracts/algosplit/contract.py:417
+    // return Bytes(b"user_") + user.bytes
+    bytec 6 // 0x757365725f
+    frame_dig -2
+    concat
+    dup
+    // smart_contracts/algosplit/contract.py:423
+    // user_bills_bytes, exists = op.Box.get(user_key)
+    box_get
+    swap
+    cover 2
+    // smart_contracts/algosplit/contract.py:425
+    // if exists:
+    bz _add_bill_to_user_else_body@2
+    // smart_contracts/algosplit/contract.py:428
+    // user_bills.append(ARC4UInt64(bill_id))
+    frame_dig -1
+    itob
+    frame_dig 0
+    dup
+    uncover 2
+    concat // on error: max array length exceeded
+    swap
+    intc_0 // 0
+    extract_uint16
+    intc_1 // 1
+    +
+    itob
+    extract 6 2
+    replace2 0
+    // smart_contracts/algosplit/contract.py:429
+    // op.Box.put(user_key, user_bills.bytes)
+    box_put
+    retsub
+
+_add_bill_to_user_else_body@2:
+    // smart_contracts/algosplit/contract.py:431-432
+    // # Create new list
+    // user_bills = DynamicArray[ARC4UInt64](ARC4UInt64(bill_id))
+    frame_dig -1
+    itob
+    pushbytes 0x0001
+    swap
+    concat
+    // smart_contracts/algosplit/contract.py:433
+    // op.Box.put(user_key, user_bills.bytes)
+    box_put
+    retsub
