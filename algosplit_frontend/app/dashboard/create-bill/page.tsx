@@ -157,6 +157,14 @@ export default function CreateBillPage() {
         throw new Error('Add at least one member with address and share');
       }
 
+      // Validate all shares are valid numbers
+      for (const member of validMembers) {
+        const share = parseFloat(member.share);
+        if (isNaN(share) || share <= 0) {
+          throw new Error(`Invalid share amount for ${member.name || 'member'}: ${member.share}`);
+        }
+      }
+
       for (const member of validMembers) {
         if (!algosdk.isValidAddress(member.address)) {
           throw new Error(`Invalid address: ${member.address}`);
@@ -164,17 +172,31 @@ export default function CreateBillPage() {
       }
 
       const total = parseFloat(totalAmount);
-      const totalShares = validMembers.reduce((sum, m) => sum + parseFloat(m.share), 0);
+      const totalShares = validMembers.reduce((sum, m) => {
+        const share = parseFloat(m.share);
+        return sum + (isNaN(share) ? 0 : share);
+      }, 0);
       const totalPeople = validMembers.length + 1;
       const expectedTotal = total;
       const expectedPayback = (total / totalPeople) * validMembers.length;
 
-      if (Math.abs(totalShares - expectedTotal) > 0.01 && Math.abs(totalShares - expectedPayback) > 0.01) {
+      console.log('Validation check:');
+      console.log('Total amount:', total);
+      console.log('Total shares:', totalShares);
+      console.log('Expected total:', expectedTotal);
+      console.log('Expected payback:', expectedPayback);
+      console.log('Members:', validMembers.map(m => ({ name: m.name, share: m.share, parsed: parseFloat(m.share) })));
+
+      // Allow custom amounts - just check that total shares don't exceed the bill amount
+      if (totalShares > total) {
         throw new Error(
-          `Total shares (${totalShares.toFixed(2)} ALGO) must equal either:\n` +
-          `• Full bill amount: ${expectedTotal.toFixed(2)} ALGO, OR\n` +
-          `• Bill minus your share: ${expectedPayback.toFixed(2)} ALGO (${expectedTotal.toFixed(2)} ÷ ${totalPeople} × ${validMembers.length})`
+          `Total shares (${totalShares.toFixed(2)} ALGO) cannot exceed the bill amount (${total.toFixed(2)} ALGO)`
         );
+      }
+
+      // Warn if shares are significantly less than expected (but allow it)
+      if (totalShares < expectedPayback * 0.5) {
+        console.warn(`Warning: Total shares (${totalShares.toFixed(2)} ALGO) are much less than expected (${expectedPayback.toFixed(2)} ALGO)`);
       }
 
       // Check balance
@@ -363,12 +385,18 @@ export default function CreateBillPage() {
                   </div>
                   <div className="md:col-span-2">
                     <input
-                      type="number"
-                      step="0.000001"
+                      type="text"
+                      inputMode="decimal"
                       value={member.share}
-                      onChange={(e) => updateMember(index, 'share', e.target.value)}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        // Allow empty string, numbers, and decimal point
+                        if (value === '' || /^\d*\.?\d*$/.test(value)) {
+                          updateMember(index, 'share', value);
+                        }
+                      }}
                       className="w-full px-3 py-2 bg-white border border-[#E2E8F0] rounded-lg text-[#0F172A] placeholder-[#94A3B8] text-sm focus:border-[#6366F1] focus:outline-none focus:ring-1 focus:ring-[#6366F1]"
-                      placeholder="Share"
+                      placeholder="0.000000"
                     />
                   </div>
                   <div className="md:col-span-1 flex items-center">

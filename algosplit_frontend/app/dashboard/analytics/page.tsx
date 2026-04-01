@@ -13,7 +13,7 @@ import {
   BarChart3
 } from 'lucide-react';
 import { getUserBills, getBill, getMember, getBillsCreatedBy } from '@/lib/contract';
-import { formatAlgoAmount } from '@/lib/algorand';
+import { formatAlgoAmount, shortenAddress } from '@/lib/algorand';
 import algosdk from 'algosdk';
 
 interface BillData {
@@ -27,6 +27,8 @@ interface BillData {
   paidAt?: Date;
   userShare?: bigint;
   userPaid?: boolean;
+  creatorName?: string;
+  memberPayments?: Array<{ name: string; address: string; amount: bigint; paid: boolean }>;
 }
 
 interface TimeSeriesData {
@@ -139,6 +141,24 @@ export default function AnalyticsPage() {
       // Map to track spending/receiving by date
       const dateMap = new Map<string, { spent: number; received: number }>();
       
+      // Fetch creator names from contacts
+      const fetchCreatorName = async (creatorAddress: string): Promise<string | undefined> => {
+        try {
+          const walletAddress = user?.walletAddress;
+          const response = await fetch('/api/contacts', {
+            headers: { 'x-wallet-address': walletAddress || '' },
+          });
+          const data = await response.json();
+          const contact = data.contacts?.find(
+            (c: { walletAddress: string }) => c.walletAddress.toLowerCase() === creatorAddress.toLowerCase()
+          );
+          return contact?.contactName;
+        } catch (error) {
+          console.error('Failed to fetch creator name:', error);
+          return undefined;
+        }
+      };
+      
       for (const billId of allBillIds) {
         const bill = await getBill(billId);
         if (!bill) continue;
@@ -152,6 +172,44 @@ export default function AnalyticsPage() {
         let userPaid: boolean | undefined;
         let createdAt: Date | undefined;
         let paidAt: Date | undefined;
+        let creatorName: string | undefined;
+        let memberPayments: Array<{ name: string; address: string; amount: bigint; paid: boolean }> = [];
+
+        // Fetch creator name if user is a member
+        if (!isCreator) {
+          creatorName = await fetchCreatorName(bill.creator);
+        } else {
+          // If user is creator, fetch member payment details
+          try {
+            const { getBillMembers } = await import('@/lib/contract');
+            const members = await getBillMembers(billId);
+            
+            // Fetch contacts to get member names
+            const walletAddress = user?.walletAddress;
+            const response = await fetch('/api/contacts', {
+              headers: { 'x-wallet-address': walletAddress || '' },
+            });
+            const data = await response.json();
+            const contacts = data.contacts || [];
+            
+            for (const memberAddr of members) {
+              const memberInfo = await getMember(billId, memberAddr);
+              if (memberInfo) {
+                const contact = contacts.find(
+                  (c: { walletAddress: string }) => c.walletAddress.toLowerCase() === memberAddr.toLowerCase()
+                );
+                memberPayments.push({
+                  name: contact?.contactName || shortenAddress(memberAddr),
+                  address: memberAddr,
+                  amount: memberInfo.share,
+                  paid: memberInfo.paid,
+                });
+              }
+            }
+          } catch (error) {
+            console.error(`Failed to get member payments for bill ${billId}:`, error);
+          }
+        }
 
         try {
           // Get bill creation transaction (app call with create_bill method)
@@ -323,6 +381,8 @@ export default function AnalyticsPage() {
           paidAt,
           userShare,
           userPaid,
+          creatorName,
+          memberPayments,
         });
       }
 
@@ -484,46 +544,76 @@ export default function AnalyticsPage() {
                   <p className="text-sm text-[#94A3B8] mt-1">Create or pay bills to see your spending patterns</p>
                 </div>
               ) : (
-                <div className="space-y-4">
-                  {timeSeriesData.map((data) => {
-                    const total = data.spent + data.received;
-                    const spentPercent = total > 0 ? (data.spent / total) * 100 : 0;
-                    const receivedPercent = total > 0 ? (data.received / total) * 100 : 0;
-                    
-                    return (
-                      <div key={data.date}>
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-sm font-medium text-[#0F172A] w-20">{data.displayDate}</span>
-                          <div className="flex-1 mx-4">
-                            <div className="relative h-10 bg-[#F8FAFC] rounded-lg overflow-hidden flex">
+                <div className="relative pt-4" style={{ height: '320px' }}>
+                  {/* Y-axis labels */}
+                  <div className="absolute left-0 top-4 bottom-8 flex flex-col justify-between text-xs text-[#64748B] w-16 text-right pr-3">
+                    <span>{maxValue.toFixed(2)}</span>
+                    <span>{(maxValue * 0.75).toFixed(2)}</span>
+                    <span>{(maxValue * 0.5).toFixed(2)}</span>
+                    <span>{(maxValue * 0.25).toFixed(2)}</span>
+                    <span>0.00</span>
+                  </div>
+
+                  {/* Chart area */}
+                  <div className="absolute left-20 right-4 top-4 bottom-8 border-l border-b border-[#E2E8F0]">
+                    {/* Grid lines */}
+                    <div className="absolute inset-0 flex flex-col justify-between pointer-events-none">
+                      {[0, 1, 2, 3, 4].map((i) => (
+                        <div key={i} className="border-t border-[#E2E8F0]"></div>
+                      ))}
+                    </div>
+
+                    {/* Chart content - Bars */}
+                    <div className="absolute inset-0 flex items-end justify-around gap-4 px-8">
+                      {timeSeriesData.map((data, index) => {
+                        const spentHeight = (data.spent / maxValue) * 100;
+                        const receivedHeight = (data.received / maxValue) * 100;
+                        
+                        return (
+                          <div key={index} className="flex items-end justify-center gap-2 h-full" style={{ flex: 1 }}>
+                            {/* Spent bar */}
+                            <div className="relative flex flex-col items-center justify-end h-full" style={{ width: '40px' }}>
                               {data.spent > 0 && (
                                 <div
-                                  className="h-full bg-[#EF4444] transition-all"
-                                  style={{ width: `${(data.spent / maxValue) * 100}%` }}
-                                ></div>
+                                  className="w-full bg-[#EF4444] rounded-t transition-all hover:bg-[#DC2626] relative group"
+                                  style={{ height: `${spentHeight}%`, minHeight: data.spent > 0 ? '4px' : '0' }}
+                                >
+                                  {/* Tooltip on hover */}
+                                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-[#0F172A] text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
+                                    Spent: {data.spent.toFixed(2)} ALGO
+                                  </div>
+                                </div>
                               )}
+                            </div>
+                            
+                            {/* Received bar */}
+                            <div className="relative flex flex-col items-center justify-end h-full" style={{ width: '40px' }}>
                               {data.received > 0 && (
                                 <div
-                                  className="h-full bg-[#10B981] transition-all"
-                                  style={{ width: `${(data.received / maxValue) * 100}%` }}
-                                ></div>
+                                  className="w-full bg-[#10B981] rounded-t transition-all hover:bg-[#059669] relative group"
+                                  style={{ height: `${receivedHeight}%`, minHeight: data.received > 0 ? '4px' : '0' }}
+                                >
+                                  {/* Tooltip on hover */}
+                                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-[#0F172A] text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
+                                    Received: {data.received.toFixed(2)} ALGO
+                                  </div>
+                                </div>
                               )}
                             </div>
                           </div>
-                          <div className="flex gap-6 text-sm w-56 justify-end">
-                            <div className="flex items-center gap-2">
-                              <span className="text-[#64748B] text-xs">Spent:</span>
-                              <span className="text-[#EF4444] font-medium">{data.spent.toFixed(2)}</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <span className="text-[#64748B] text-xs">Received:</span>
-                              <span className="text-[#10B981] font-medium">{data.received.toFixed(2)}</span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* X-axis labels */}
+                  <div className="absolute left-20 right-4 bottom-0 h-8 flex items-center justify-around text-xs text-[#64748B]">
+                    {timeSeriesData.map((data, index) => (
+                      <span key={index} className="text-center">
+                        {data.displayDate}
+                      </span>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
@@ -540,14 +630,16 @@ export default function AnalyticsPage() {
                 <div className="space-y-3">
                   {bills.slice(0, 5).map((bill) => {
                     const isCreator = bill.creator === user.walletAddress;
+                    const paidMembers = bill.memberPayments?.filter(m => m.paid) || [];
+                    
                     return (
                       <button
                         key={bill.id}
                         onClick={() => router.push(`/dashboard/bills/${bill.id}`)}
                         className="w-full flex items-center justify-between p-4 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg hover:border-[#CBD5E1] text-left"
                       >
-                        <div className="flex items-center gap-4">
-                          <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                        <div className="flex items-center gap-4 flex-1">
+                          <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
                             isCreator ? 'bg-[#DCFCE7]' : 'bg-[#FEE2E2]'
                           }`}>
                             {isCreator ? (
@@ -556,14 +648,28 @@ export default function AnalyticsPage() {
                               <TrendingUp className="w-5 h-5 text-[#DC2626]" />
                             )}
                           </div>
-                          <div>
+                          <div className="flex-1 min-w-0">
                             <div className="font-medium text-[#0F172A]">Bill #{bill.id}</div>
                             <div className="text-sm text-[#64748B]">
                               {isCreator ? 'Created by you' : 'You are a member'}
                             </div>
+                            {!isCreator && bill.userPaid && bill.userShare && (
+                              <div className="text-xs text-[#DC2626] mt-1">
+                                You paid {formatAlgoAmount(Number(bill.userShare))} ALGO to {bill.creatorName || shortenAddress(bill.creator)}
+                              </div>
+                            )}
+                            {isCreator && paidMembers.length > 0 && (
+                              <div className="text-xs text-[#16A34A] mt-1 space-y-0.5">
+                                {paidMembers.map((member, idx) => (
+                                  <div key={idx}>
+                                    {member.name} paid you {formatAlgoAmount(Number(member.amount))} ALGO
+                                  </div>
+                                ))}
+                              </div>
+                            )}
                           </div>
                         </div>
-                        <div className="text-right">
+                        <div className="text-right flex-shrink-0 ml-4">
                           <div className="font-semibold text-[#0F172A]">
                             {formatAlgoAmount(Number(bill.totalAmount))} ALGO
                           </div>
