@@ -11,6 +11,7 @@ import { formatAlgoAmount, shortenAddress } from '@/lib/algorand';
 interface BillWithDetails extends Bill {
   id: number;
   memberDetails?: Member;
+  creatorName?: string;
 }
 
 export default function DashboardPage() {
@@ -42,6 +43,13 @@ export default function DashboardPage() {
       const createdBillIds = await getBillsCreatedBy(user.walletAddress);
       const allBillIds = Array.from(new Set([...memberBillIds, ...createdBillIds]));
       
+      // Fetch contacts to get creator names
+      const contactsResponse = await fetch('/api/contacts', {
+        headers: { 'x-wallet-address': user.walletAddress },
+      });
+      const contactsData = await contactsResponse.json();
+      const contacts = contactsData.contacts || [];
+      
       const billsWithDetails: BillWithDetails[] = [];
       
       for (const billId of allBillIds) {
@@ -54,10 +62,22 @@ export default function DashboardPage() {
           memberDetails = details || undefined;
         }
 
+        // Get creator name from contacts
+        let creatorName: string | undefined;
+        if (bill.creator === user.walletAddress) {
+          creatorName = 'You';
+        } else {
+          const contact = contacts.find(
+            (c: { walletAddress: string }) => c.walletAddress.toLowerCase() === bill.creator.toLowerCase()
+          );
+          creatorName = contact?.contactName;
+        }
+
         billsWithDetails.push({
           id: billId,
           ...bill,
           memberDetails,
+          creatorName,
         });
       }
 
@@ -234,7 +254,7 @@ export default function DashboardPage() {
                       <div>
                         <h3 className="font-semibold text-[#0F172A] mb-1">Bill #{bill.id}</h3>
                         <p className="text-sm text-[#64748B]">
-                          Creator: {shortenAddress(bill.creator)}
+                          Creator: {bill.creatorName || shortenAddress(bill.creator)}
                         </p>
                       </div>
                       <div className="text-right">
