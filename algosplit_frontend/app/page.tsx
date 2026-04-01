@@ -24,6 +24,35 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
+      {/* Structured Data for SEO */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "WebApplication",
+            "name": "AlgoSplit",
+            "description": "Decentralized bill splitting on Algorand blockchain with instant settlement",
+            "url": "https://algosplit.app",
+            "applicationCategory": "FinanceApplication",
+            "operatingSystem": "Web",
+            "offers": {
+              "@type": "Offer",
+              "price": "0",
+              "priceCurrency": "USD"
+            },
+            "featureList": [
+              "Smart contract-based bill splitting",
+              "Instant settlement (~4.5 seconds)",
+              "Wallet-based authentication",
+              "Contact management",
+              "Analytics dashboard",
+              "Minimal transaction fees"
+            ]
+          })
+        }}
+      />
+      
       <Navbar />
 
       {/* Hero Section */}

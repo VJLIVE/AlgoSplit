@@ -1,0 +1,10 @@
+# Allow all crawlers
+User-agent: *
+Allow: /
+
+# Disallow dashboard and user-specific pages
+Disallow: /dashboard/
+Disallow: /api/
+
+# Sitemap
+Sitemap: https://algosplit.app/sitemap.xml

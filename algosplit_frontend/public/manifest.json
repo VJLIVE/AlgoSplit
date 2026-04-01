@@ -1,0 +1,16 @@
+{
+  "name": "AlgoSplit - Split Bills on Algorand",
+  "short_name": "AlgoSplit",
+  "description": "Decentralized bill splitting on Algorand blockchain with instant settlement",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F8FAFC",
+  "theme_color": "#6366F1",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}
