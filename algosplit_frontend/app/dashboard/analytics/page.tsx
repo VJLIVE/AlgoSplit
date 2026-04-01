@@ -467,11 +467,11 @@ export default function AnalyticsPage() {
                 </div>
                 <div className="flex gap-4 text-sm">
                   <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 bg-[#DC2626] rounded"></div>
+                    <div className="w-3 h-3 bg-[#EF4444] rounded"></div>
                     <span className="text-[#64748B]">Spent</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 bg-[#16A34A] rounded"></div>
+                    <div className="w-3 h-3 bg-[#10B981] rounded"></div>
                     <span className="text-[#64748B]">Received</span>
                   </div>
                 </div>
@@ -485,39 +485,45 @@ export default function AnalyticsPage() {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {timeSeriesData.map((data) => (
-                    <div key={data.date}>
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm font-medium text-[#0F172A] w-20">{data.displayDate}</span>
-                        <div className="flex-1 mx-4">
-                          <div className="relative h-10 bg-[#F8FAFC] rounded-lg overflow-hidden">
-                            {data.spent > 0 && (
-                              <div
-                                className="absolute left-0 top-0 h-full bg-[#DC2626] opacity-70 transition-all"
-                                style={{ width: `${(data.spent / maxValue) * 100}%` }}
-                              ></div>
-                            )}
-                            {data.received > 0 && (
-                              <div
-                                className="absolute left-0 top-0 h-full bg-[#16A34A] opacity-50 transition-all"
-                                style={{ width: `${(data.received / maxValue) * 100}%` }}
-                              ></div>
-                            )}
+                  {timeSeriesData.map((data) => {
+                    const total = data.spent + data.received;
+                    const spentPercent = total > 0 ? (data.spent / total) * 100 : 0;
+                    const receivedPercent = total > 0 ? (data.received / total) * 100 : 0;
+                    
+                    return (
+                      <div key={data.date}>
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm font-medium text-[#0F172A] w-20">{data.displayDate}</span>
+                          <div className="flex-1 mx-4">
+                            <div className="relative h-10 bg-[#F8FAFC] rounded-lg overflow-hidden flex">
+                              {data.spent > 0 && (
+                                <div
+                                  className="h-full bg-[#EF4444] transition-all"
+                                  style={{ width: `${(data.spent / maxValue) * 100}%` }}
+                                ></div>
+                              )}
+                              {data.received > 0 && (
+                                <div
+                                  className="h-full bg-[#10B981] transition-all"
+                                  style={{ width: `${(data.received / maxValue) * 100}%` }}
+                                ></div>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                        <div className="flex gap-6 text-sm w-56 justify-end">
-                          <div className="flex items-center gap-2">
-                            <span className="text-[#64748B] text-xs">Spent:</span>
-                            <span className="text-[#DC2626] font-medium">{data.spent.toFixed(2)}</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-[#64748B] text-xs">Received:</span>
-                            <span className="text-[#16A34A] font-medium">{data.received.toFixed(2)}</span>
+                          <div className="flex gap-6 text-sm w-56 justify-end">
+                            <div className="flex items-center gap-2">
+                              <span className="text-[#64748B] text-xs">Spent:</span>
+                              <span className="text-[#EF4444] font-medium">{data.spent.toFixed(2)}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-[#64748B] text-xs">Received:</span>
+                              <span className="text-[#10B981] font-medium">{data.received.toFixed(2)}</span>
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>

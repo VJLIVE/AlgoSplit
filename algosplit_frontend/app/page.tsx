@@ -79,7 +79,7 @@ export default function Home() {
               </h1>
               
               <p className="text-xl text-[#475569] mb-8 max-w-lg leading-relaxed">
-                No more IOUs. No more awkward reminders. Just transparent, instant settlements powered by smart contracts.
+                No more awkward reminders. Just transparent, instant settlements powered by smart contracts.
               </p>
               
               <div className="flex flex-col sm:flex-row gap-4 mb-12">
