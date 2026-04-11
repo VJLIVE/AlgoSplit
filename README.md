@@ -97,7 +97,7 @@ AlgoSplit/
 #### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/yourusername/algosplit.git
+git clone https://github.com/vjlive/algosplit.git
 cd algosplit
 ```
 
@@ -515,8 +515,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📞 Support
 
-- **Issues**: https://github.com/yourusername/algosplit/issues
-- **Discussions**: https://github.com/yourusername/algosplit/discussions
+- **Issues**: https://github.com/vjlive/algosplit/issues
+- **Discussions**: https://github.com/vjlive/algosplit/discussions
 - **Email**: support@algosplit.example.com
 
 ## 🗺️ Roadmap
